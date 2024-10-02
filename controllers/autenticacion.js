@@ -170,13 +170,13 @@ async function password_recovery(req, res) {   // función redirigida desde api/
       port: 465,
       secure: true,
       auth: {
-        user: 'francodel380@gmail.com',
-        pass: 'xthk vflx wjqn qaef'
+        user: 'anxsuite@gmail.com',
+        pass: 'flfb qblb tsef clqq'
       }
     });
 
     let mailOptions = {
-      from: 'francodel380@gmail.com',
+      from: 'anxsuite@gmail.com',
       to: email,
       subject: 'Recuperación de contraseña',
       text: 'Su contraseña es:\n' + pass_to_recover
@@ -765,8 +765,8 @@ async function cotizaciones(req, res) {
                 '<ul>' +
                 '<li><strong>Tipo:</strong> ' + type + '</li>' +
                 '<li><strong>Volumen:</strong> ' + nomvol + '</li>' +
-                '<li><strong>Screen:</strong> ' + screen + '</li>' +
-                '<li><strong>Angle:</strong> ' + angle + '</li>' +
+                '<li><strong>Lineatura:</strong> ' + screen + '</li>' +
+                '<li><strong>Ángulo:</strong> ' + angle + '</li>' +
                 '</ul>',
         };  
         transporter.sendMail(mailOptions);
@@ -789,8 +789,8 @@ async function cotizaciones(req, res) {
           '<ul>' +
           '<li><strong>Tipo:</strong> ' + req2[i].type + '</li>' +
           '<li><strong>Volumen:</strong> ' + req2[i].nomvol + '</li>' +
-          '<li><strong>Screen:</strong> ' + req2[i].screen + '</li>' +
-          '<li><strong>Angle:</strong> ' + req2[i].angle + '</li>' +
+          '<li><strong>Lineatura:</strong> ' + req2[i].screen + '</li>' +
+          '<li><strong>Ángulo:</strong> ' + req2[i].angle + '</li>' +
           '</ul>'
           
           string2 = string2 + ''+string1[i]+'<br>';
@@ -799,7 +799,7 @@ async function cotizaciones(req, res) {
         let mailOptions = {
           from: 'anxsuite@gmail.com',
           to: 'mario.molina@qanders.com; enzo.carpio@qanders.com; rodrigo.ma@qanders.com',
-          subject: 'ANX Suite - Solicitud de cotización de rodillos ' + sesion_empresa,
+          subject: 'ANX Suite - Solicitud de cotización de rodillos - ' + sesion_empresa,
           html: string2
         }
         transporter.sendMail(mailOptions);
