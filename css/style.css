@@ -458,7 +458,7 @@ b{
 
 .modal .modal-body #search-submit{
   background: var(--color-primary);
-  color: var(--color-info-light);
+  color: var(--color-white);
   font-family: inherit;
   font-weight: 400;
   font-size: 20px;
