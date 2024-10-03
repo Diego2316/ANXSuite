@@ -32,22 +32,23 @@
 }
 
 .right-content .lista table tbody td, thead th{
-  width: 11.55%;
+  width: 11.2%;
   float: left;
 }
 
 .right-content .lista table .pdf{
-  padding-left: 0.7rem;
-  width: 2%;
+  padding-left: 0.5rem;
+  width: 3%;
 }
 
 .right-content .lista table .send{
-  padding-left: 0.1rem;
-  width: 2%;
+  padding-left: 0.5rem;
+  width: 3%;
 }
 
 .right-content .lista table .trash{
-  width: 2%;
+  padding-left: 1.5rem;
+  width: max-content;
   color: red;
 }
 
@@ -149,7 +150,7 @@
 .modal .modal-content .accept-btn{
   display: flex;
   background: var(--color-primary);
-  color: var(--color-info-light);
+  color: var(--color-white);
   align-items: center;
   font-family: inherit;
   font-size: 18px;

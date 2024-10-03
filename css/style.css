@@ -271,7 +271,6 @@ b{
   color: var(--color-white);
   border-top-left-radius: 1.8rem;
   border-top-right-radius: 1.8rem;
-  
 }
 
 .modal .modal-header h2{
@@ -335,7 +334,8 @@ b{
 
 .navbar .dropdown .dropbtn{
   cursor: pointer;
-  font-size: 16px; 
+  font-size: 16px;
+  font-weight: 500; 
   border: none;
   outline: none;
   color: var(--color-white);
@@ -397,8 +397,8 @@ b{
 
 .top-bar .title{
   flex: 1 0 auto;
-  padding-top: 1rem;
-  padding-bottom: 1rem;
+  padding-top: 0.9rem;
+  padding-bottom: 0.9rem;
   margin-left: 1.5rem;
 }
 
@@ -406,8 +406,7 @@ b{
   flex: 0 0 10rem;
   text-align: left;
   padding-top: 0.9rem;
-  padding-bottom: 0.9rem;
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 500;
 }
 
@@ -417,14 +416,13 @@ b{
 }
 
 .top-bar .user{
-  flex: 0 0 15rem;
+  flex: 0 0 10rem;
   display: flex;
   flex-direction: column;
   justify-self: right;
   text-align: right;
-  padding-top: 1rem;
-  padding-bottom: 1rem;
-  margin-left: 2.5rem;
+  padding-top: 0.9rem;
+  padding-bottom: 0.9rem;
   margin-right: 1.5rem;
   font-size: 16px;
   font-weight: 500;

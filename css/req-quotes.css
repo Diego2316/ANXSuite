@@ -76,7 +76,7 @@
 }
 
 .right-content > div table tbody{
-  height: 81vh;
+  height: 80vh;
   overflow-y: auto;
 }
 
@@ -263,7 +263,7 @@
 }
 
 .right-content .quote .quote-list .quote-body{
-  height: 76vh;
+  height: 74vh;
   overflow-y: auto;
 }
 
