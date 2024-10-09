@@ -750,7 +750,10 @@ const estimarVida = async(e)=>{
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({id: aniloxId})
+        body: JSON.stringify({
+          id: aniloxId,
+          eol: 1
+        })
       }),
           json = await res.json();
       if(!res.ok) throw{status: res.status, statusText: res.statusText};

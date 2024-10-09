@@ -526,7 +526,7 @@ async function analysis(IpPath, IrPath) {
 
 async function tablaAniloxList(req, res) {
   try {
-    let { id, brand, purchase, volume, depth, opening, wall, screen, angle, last, master, patron, revision, insertar, modificar, recorrido, nomvol, mensaje } = req.body;
+    let { id, brand, purchase, volume, depth, opening, wall, screen, angle, last, master, patron, revision, insertar, modificar, recorrido, nomvol, mensaje, eol } = req.body;
     let tipo = angle ? (angle > 30 && angle < 80 ? "Hexagonal" : "GTT") : "";  
     if (id) {
       if (id.startsWith("AA")) {
@@ -551,7 +551,7 @@ async function tablaAniloxList(req, res) {
       return res.status(200).send({ status: "Success", message: "Estado", result });
     }
 
-    if(id && !brand) {
+    if(id && !brand && !eol) {
       const sql = 'SELECT * FROM anilox_list WHERE id=? and empresa=?';
       const result = await queryDB(sql, [id, sesion_empresa]);
       result.forEach(row => {
@@ -619,6 +619,11 @@ async function tablaAniloxList(req, res) {
           });
         });                    
       });  
+    }
+    else if(id && eol){
+      const sql = 'SELECT id, nomvol FROM anilox_list WHERE id=?';
+      const result = await queryDB(sql, [id]);
+      return res.status(200).send({ status: "Success", message: "Estado", result });
     }
     else {
       const sql = 'SELECT id, brand, type, purchase, recorrido, nomvol, volume, last, master FROM anilox_list WHERE empresa=?';

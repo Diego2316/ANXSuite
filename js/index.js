@@ -46,7 +46,10 @@ const drawIndex = async()=>{
       method: 'POST',
       headers: {
           'Content-Type': 'application/json',
-      }
+      },
+      body: JSON.stringify({
+        mensaje: "getAniloxList"
+      })
     });
     //Fetch call server-response para el listado de anilox (anillox_analysis)    
     let res2 = await fetch('/api/analysis', {
@@ -761,7 +764,10 @@ const updateTable = async(mode)=>{
       method: 'POST',
       headers: {
           'Content-Type': 'application/json',
-      }
+      },
+      body: JSON.stringify({
+        mensaje: "getAniloxList"
+      })
     }),
         json1 = await res1.json();
 
