@@ -7,8 +7,8 @@ let exportFilter = null;
 
 const enableExport = ()=>{
   $exportSubmit.disabled = false;
-  $exportSubmit.style.backgroundColor  = "#134371";
-  $exportSubmit.style.color = "#dce1eb";
+  $exportSubmit.style.backgroundColor  = "#009bd3";
+  $exportSubmit.style.color = "#fff";
   $exportSubmit.style.cursor = "pointer";
 }
 

@@ -4,7 +4,7 @@ module.exports = { path }; // Exportar la variable path para poder usarla en otr
 
 const express = require("express"); // Ncesario para poder crear la aplicación Express
 const { login, registro, registro_licencia, password_recovery, soloAdmin, soloPublico, soloSuperAdmin, tablaAniloxAnalysis, tablaAniloxList, cotizaciones,
-        tablaUsuarios, tablaClientes, tablaLicencias, tablaAniloxHistory, borrarAnilox, generarPdf } = require("./controllers/autenticacion");
+  usuarioNivelCliente, tablaClientes, tablaLicencias, tablaAniloxHistory, borrarAnilox, generarPdf } = require("./controllers/autenticacion");
 
 const app = express();
 const port = 3000;
@@ -184,7 +184,7 @@ app.post('/api/listado', tablaAniloxList);
 app.post('/api/anilox-history', tablaAniloxHistory);
 app.post('/api/request-quotes', cotizaciones);
 app.post('/api/borrar-anilox', borrarAnilox);
-app.post('/api/usuarios', tablaUsuarios); 
+app.post('/api/usuarioNivelCliente', usuarioNivelCliente);
 app.post('/api/clientes', tablaClientes); 
 app.post('/api/licencias', tablaLicencias);
 app.post('/api/pdf', generarPdf); // fetch('/api/pdf') redirige a la función generarPdf de autenticacion.js

@@ -1,7 +1,7 @@
 Chart.register(ChartDataLabels);
 
 const $aniloxId = d.getElementById("anilox-id"),
-      aniloxId = ss.getItem("aniloxId");
+      aniloxId = ss.getItem("aniloxId"),
       aniloxBrand = ss.getItem("aniloxBrand");
 
 const $dataTop = d.querySelector(".data-top"),
@@ -157,12 +157,12 @@ const getAnilox = async()=>{
     let type = json1[0].type;
     let purchase = json1[0].purchase;
     let recorrido = json1[0].recorrido;
-    let volume = (json1[0].volume*volMulti)/1.55;
-    let nomVol = Math.round(json1[0].nomvol*volMulti/1.55 * 10) / 10;
+    let volume = Math.round(((json1[0].volume*volMulti)+Number.EPSILON)*10)/10;
+    let nomVol = Math.round(((json1[0].nomvol*volMulti)+Number.EPSILON)*10)/10;
     let depth = json1[0].depth;
     let opening = json1[0].opening;
     let wall = json1[0].wall;
-    let screen = Math.round(json1[0].screen*screenMulti * 10) / 10;
+    let screen = Math.round(((json1[0].screen*screenMulti)+Number.EPSILON)*10)/10;
     let angle = json1[0].angle;
     let last = json1[0].last;
     let next = json2[0].next;
@@ -503,6 +503,7 @@ const getAnilox = async()=>{
         json2 = json2.result
 
     if(!res.ok) throw{status: res.status, statusText: res.statusText};
+    if(!res2.ok) throw{status: res2.status, statusText: res2.statusText};
 
     let volLabels = [],
         volData = [],
@@ -510,11 +511,11 @@ const getAnilox = async()=>{
 
     for(let i = 0; i < json.length; i++){
      volLabels[i] = json[i].date;
-     volData[i] = Math.round(((json[i].volume*volMulti)/1.55) * 10) / 10; // VOLUMEN EN BCM
+     volData[i] = Math.round(((json[i].volume*volMulti)+Number.EPSILON)*10)/10;
      diag[i] = json[i].diagnostico;
     }
 
-    let nomVol = json2[0].nomvol;
+    let nomVol = Math.round(((json2[0].nomvol*volMulti)+Number.EPSILON)*10)/10;
     let nomData = [];
 
     for(let i = 0; i < json.length; i++){
@@ -539,9 +540,6 @@ const getAnilox = async()=>{
         tension: 0.1,
         pointStyle: false,
         datalabels: {
-          // display: function(context){
-          //   return context.dataIndex === 0;
-          // }
           display: false, // Desactiva etiquetas
         },
       }]
@@ -663,344 +661,285 @@ const viewMore = (e)=>{
   }
 }
 
-function encontrarValoresCercanosMenores(arr, objetivos) {
-  return objetivos.map(objetivo => {
-    return arr.reduce((prev, curr) => {
-      if (curr <= objetivo && (prev >= objetivo || Math.abs(curr - objetivo) < Math.abs(prev - objetivo))) {
-        return curr;
-      }
-      return prev;
-    }, Number.MAX_VALUE);
-  });
-}
-
-function generarRectaTendencia(eolDates, volData, limite) {
-  // Convertir fechas a valores numéricos (timestamp)
-  const x = eolDates.map(date => new Date(date).getTime());
-  const y = volData;
-
-  const n = x.length;
-  const sumX = x.reduce((a, b) => a + b, 0);
-  const sumY = y.reduce((a, b) => a + b, 0);
-  const sumXY = x.reduce((sum, xi, i) => sum + xi * y[i], 0);
-  const sumXX = x.reduce((sum, xi) => sum + xi * xi, 0);
-
-  const m = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
-  const b = (sumY - m * sumX) / n;
-
-  // Calcular los puntos de la recta de tendencia en las fechas originales
-  const tendencia = x.map(xi => ({
-    x: new Date(xi).toISOString().split('T')[0], // Convertir de nuevo a formato de fecha
-    y: m * xi + b
-  }));
-
-  // Generar puntos en fechas futuras hasta que el valor sea menor o igual al límite
-  let ultimaFecha = new Date(eolDates[eolDates.length - 1]);
-  let ultimoValor = tendencia[tendencia.length - 1].y;
-  let b2 = b > 200 ? 2 : b > 100 ? 3 : 6; // Si b es mayor a 200 elabora una pendiente de 2 meses, si es mayor a 100 de 3 meses, de lo contrario de 6 meses
-
-  if(m < -0.000000000005 ){
-    while (ultimoValor > limite) {
-      ultimaFecha.setMonth(ultimaFecha.getMonth() + b2); // Incrementar la fecha en 6 meses o 3 meses dependiendo de la intersección
-      const nuevaFecha = ultimaFecha.getTime();
-      ultimoValor = m * nuevaFecha + b;
-      tendencia.push({
-        x: ultimaFecha.toISOString().split('T')[0],
-        y: ultimoValor
-      });
-    }
+const dateEstimation = (measuredVol, measuredDates, estimatedVol)=>{
+  let estimatedDates = measuredDates.map(el => el);
+  for(let i = 0; i < estimatedVol.length - measuredVol.length; i++){
+    let last = `${estimatedDates[estimatedDates.length - 1]} 00:00:00`;
+    last = new Date(last);
+    let next = new Date(last.setMonth(last.getMonth() + 6)),
+        year = String(next.getFullYear()),
+        month = String(next.getMonth() + 1),
+        day = String(next.getDate());
+    month.length < 2 ? month = `0${month}` : month = month;
+    day.length < 2 ? day = `0${day}` : day = day;
+    next = [year, month, day].join('-');
+    estimatedDates.push(next);
   }
-
-  return { tendencia, m, b };
+  return estimatedDates;
 }
 
-function encontrarPosiciones(arr, valoresCercanos) {
-  return valoresCercanos.map(valorCercano => {
-    const index = arr.indexOf(valorCercano);
-    return index !== -1 ? index + 1 : -1; // Sumar 1 para que la posición sea 1-indexada
+const percentEstimation = (nomVol, estimatedVol)=>{
+  let estimatedIndex = [], estimatedValue = [];
+  estimatedVol.some((el, index) => {
+    if(el <= 0.9*nomVol){
+      estimatedIndex.push(index);
+      estimatedValue.push(el);
+      return true;
+    }
   });
+  estimatedVol.some((el, index) => {
+    if(el <= 0.8*nomVol){
+      estimatedIndex.push(index);
+      estimatedValue.push(el);
+      return true;
+    }
+  });
+  estimatedVol.some((el, index) => {
+    if(el <= 0.7*nomVol){
+      estimatedIndex.push(index);
+      estimatedValue.push(el);
+      return true;
+    }
+  });
+  estimatedIndex.push(estimatedVol.length - 1);
+  estimatedValue.push(estimatedVol[estimatedVol.length - 1]);
+  let estimatedPercent = {0: estimatedIndex, 1: estimatedValue};
+  return estimatedPercent;
+}
+
+const linearRegression = (nomVol, measuredVol, measuredDates)=>{
+  let lim = 0.6*nomVol, estimatedVol = [], estimatedDates = [], estimatedPercent = {};
+  let m = 0, b = 0;
+  let xSum = 0, ySum = 0, xxSum = 0, xySum = 0, count = measuredVol.length;
+  if(measuredVol[measuredVol.length - 1] > lim){
+    for(let i = 0; i < count ; i++){
+      xSum += i;
+      ySum += measuredVol[i];
+      xxSum += i * i;
+      xySum += i * measuredVol[i];
+    }
+    m = (count * xySum - xSum * ySum) / (count * xxSum - xSum * xSum);
+    if(m <= -0.01){
+      b = (ySum / count) - (m * xSum) / count;
+      let h = ((lim - b) / m) + 10;
+      for(let i = 0; i < h; i++){
+        let vol = Math.round(((i * m + b) + Number.EPSILON) * 1000) / 1000;
+        estimatedVol.push(vol);
+        if(estimatedVol[i] < lim){
+          break;
+        }
+      }
+      estimatedPercent = percentEstimation(nomVol, estimatedVol);
+      estimatedDates = dateEstimation(measuredVol, measuredDates, estimatedVol);
+    }
+    else estimatedVol = 2000;
+  }
+  else estimatedVol = 1000;
+  return [m, b, estimatedVol, estimatedDates, estimatedPercent];
 }
 
 const estimarVida = async(e)=>{
   if(e.target === $estimarVida){ 
     $modalEOLAnilox.style.display = "block";
+    let nomVol;
+    let measuredVol = [];
+    let measuredDates = [];
     try {
-      let res1 = await fetch('api/analysis', {
+      let res = await fetch('api/listado', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({id: aniloxId})
       }),
-          json1 = await res1.json();
-          
-      let res2 = await fetch('api/listado', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({id: aniloxId})
-      }),
-          json2 = await res2.json();
-      let res3, json3;
-        json1 = json1.result; // analysis
-        json2 = json2.result; // listado
-  
-      if(!res1.ok) throw{status: res1.status, statusText: res1.statusText};
-      if(!res2.ok) throw{status: res2.status, statusText: res2.statusText};
-      
-      
-      let eolData=[], nomVol = Math.round((json2[0].nomvol*volMulti)*100/100); // nomVol en cm3/m2;
-      for(let i = 0; i < JSON.parse(json1[0].eol).length; i++){
-        eolData[i] = JSON.parse(json1[0].eol)[i]*volMulti;
-      }
-
-      console.log("eolData: ", eolData);
-      let msg;
-
-      console.log("eolData[0] = ",eolData[0]);
-      if(eolData[0] == 1000 || eolData[0] == 1550){msg = `El volumen de celda ya se encuentra por debajo del 60% del volumen nominal (${(nomVol/1.55 * 0.9).toFixed(3)}).`;} // FALTA UPDATEAR
-      else if (eolData[0] == 2000 || eolData[0] == 3100){msg = `No se cuenta suficientes datos para realizar una estimación.`;} // CUANDO ES MENOR A 3 actualizar eolData a 2000
-      else {
-        res3 = await fetch('/api/anilox-history', {
-          method: 'POST',
-          headers: {
-              'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({id: aniloxId})
-        }),
-            json3 = await res3.json();
-            json3 = json3.result; // history
-
-        if(!res3.ok) throw{status: res3.status, statusText: res3.statusText};
-
-        $eolGraphContainer.style.display = "flex";
-        $tableContainer.style.display = "flex";
-
-        let eolDates = [],
-            volData = [],
-            percentVol = [],
-            percentDates = JSON.parse(json1[0].percent).dates;
-        for(let i = 0; i < json3.length; i++){
-          eolData[i] = json3[i].volume*volMulti;
-          eolDates[i] = json3[i].date;
-          volData[i] = json3[i].volume*volMulti;
-        }
-        
-        for(let i = 0; i < json3.length; i++){
-          percentVol[i] = Math.round(((JSON.parse(json1[0].percent).values[i]*volMulti)*1000)/1000);
-        }
-
-        console.log("eolDates", eolDates);
-        console.log("volData: ", volData);
-        console.log("percentVol: ", percentVol);
-        console.log("percentDates: ", percentDates);
-
-        const { m, b } = generarRectaTendencia(eolDates, volData, 0.6*nomVol*volMulti);
-        console.log("m: " + m);
-        console.log("b: " + b);
-        if(m >= -0.000000000005) {
-          eolData = 2000;
-          msg = `No se cuenta con suficientes datos para realizar una estimación.`;
-          pdfPath = path.join(__dirname, '/modelo_reporte_final_alt.pdf');
-          percentVol = "";
-          percentDates = "";
-        }
-        else{
-          eolData = generarRectaTendencia(eolDates, volData, 0.6*nomVol*volMulti).tendencia.map(point => parseFloat(point.y.toFixed(3)));                    
-          newDates = generarRectaTendencia(eolDates, volData, 0.6*nomVol*volMulti).tendencia.map(point => point.x);
-          percentVol = encontrarValoresCercanosMenores(eolData, [0.9*nomVol*volMulti, 0.8*nomVol*volMulti, 0.7*nomVol*volMulti, 0.6*nomVol*volMulti]);
-          percentDates = encontrarPosiciones(eolData, percentVol);
-          actualDates = percentDates.map(pos => newDates[pos-1]);
-          ultimaFecha = new Date(eolDates[eolDates.length - 1]);
-          diferenciasEnAnios = actualDates.map(dateStr => {
-            const actualDate = new Date(dateStr);
-            const diferenciaEnMilisegundos = actualDate - ultimaFecha;
-            const diferenciaEnAnios = diferenciaEnMilisegundos / (1000 * 60 * 60 * 24 * 365.25); // 365.25 para considerar los años bisiestos
-            return diferenciaEnAnios;
-          });
-        }
-
-        for(let i = 0; i < JSON.parse(json1[0].eol).length - json3.length; i++){
-          let last = `${eolDates[json3.length - 1 + i]} 00:00:00`;
-          last = new Date(last);
-
-          let next = new Date(last.setMonth(last.getMonth() + 6)),
-              year = String(next.getFullYear()),
-              month = String(next.getMonth() + 1),
-              day = String(next.getDate());
-
-          month.length < 2 ? month = `0${month}` : month = month;
-          day.length < 2 ? day = `0${day}` : day = day;
-
-          next = [year, month, day].join('-');
-          eolDates[json3.length + i] = next;
-        }
-        
-        const dataEOLGraph = {
-          labels: eolDates,
-          datasets: [{
-            type: 'line',
-            label: `Volumen estimado (${ls.getItem("volumeUnit")})`,
-            data: eolData.map(dato => Math.round((dato/1.55) * 10) / 10),
-            fill: false,
-            borderColor: 'rgba(255, 0, 0, 0.35)',
-            tension: 0.1,
-            datalabels: {
-              display: true,
-              align: 'top',
-            },
-          }, {
-            type: 'scatter',
-            label: `Volumen medido (${ls.getItem("volumeUnit")})`,
-            data: volData.map(dato => Math.round((dato/1.55) * 10) / 10),
-            fill: false,
-            borderColor: 'rgba(0, 0, 255, 0.6)',
-            datalabels: {
-              display: true,
-            },
-          }]
-        };
-        
-        eolGraph = new Chart($eolGraph, {
-          data: dataEOLGraph,
-          options: {
-            plugins: {
-              legend: {
-                display: true,
-                position: "bottom",
-                labels: {
-                  font: {
-                    weight: 500,
-                    size: 14,
-                  },
-                  padding: 15,
-                  boxWidth: 30,
-                },
-                reverse: true,
-              },
-              datalabels:{
-                color: '#363949',
-                align: 'right', 
-                padding: {
-                  right: 7,
-                },
-                font: {
-                  size: 13,
-                  weight: 500,
-                },
-                clip: false,
-                formatter: function(value, context){
-                  if(context.dataset.type === 'line'){
-                    if((value == Math.round((percentVol[0]/1.55) * 10) / 10 && ((percentDates[0] - json3.length) / 2) > 0) || (value == Math.round((percentVol[1]/1.55) * 10) / 10 && ((percentDates[1] - json3.length) / 2) > 0) || (value == Math.round((percentVol[2]/1.55) * 10) / 10 && ((percentDates[2] - json3.length) / 2) > 0) || (value == Math.round((percentVol[3]/1.55) * 10) / 10 && ((percentDates[3] - json3.length) / 2) > 0)) {
-                      return value
-                    }
-                    else {
-                      return ''
-                    }
-                  }
-                },
-              },
-              tooltip: {
-                enabled: true,
-                titleFont: {
-                  size: 16,
-                  weight: 600,
-                },
-                bodyFont: {
-                  size: 14,
-                  weight: 500,
-                },
-                footerFont: {
-                  size: 16,
-                  weight: 300,
-                },
-                callbacks: {
-                  label: function(context){
-                    let data = context.parsed.y;
-                    return 'Volumen: ' + data + ' ' + ls.getItem("volumeUnit");
-                  },
-                  footer: function(tooltipItems){
-                    let vol = tooltipItems[0].dataset.data[tooltipItems[0].dataIndex];
-                    if(vol == Math.round((percentVol[0]/1.55) * 10) / 10 && ((percentDates[0] - json3.length) / 2) > 0){return `Volumen de celda aprox. 90% del nominal (${(nomVol/1.55 * 0.9).toFixed(3)})`}
-                    if(vol == Math.round((percentVol[1]/1.55) * 10) / 10 && ((percentDates[1] - json3.length) / 2) > 0){return `Volumen de celda aprox. 80% del nominal (${(nomVol/1.55 * 0.8).toFixed(3)})`}
-                    if(vol == Math.round((percentVol[2]/1.55) * 10) / 10 && ((percentDates[2] - json3.length) / 2) > 0){return `Volumen de celda aprox. 70% del nominal (${(nomVol/1.55 * 0.7).toFixed(3)})`}
-                    if(vol == Math.round((percentVol[3]/1.55) * 10) / 10 && ((percentDates[3] - json3.length) / 2) > 0){return `Volumen de celda aprox. 60% del nominal (${(nomVol/1.55 * 0.6).toFixed(3)})`}
-                  }
-                },
-              },
-            },
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-              x: {
-                ticks: {
-                  display: true,
-                  font: {
-                    weight: 500,
-                    size: 14,
-                  }
-                },
-              },
-              y: {
-                ticks: {
-                  stepSize: 0.1,
-                  font: {
-                    weight: 500,
-                    size: 14,
-                  }
-                },
-              },
-            },
-          }
-        });
-        msg = '';
-
-        let tableData = Array.from(Array(percentVol.length), ()=>({
-          volumePercent: '',
-          volumeEstimated: '',
-          timeRemainingEstimated: '',
-        }));
-
-        for (i = 0; i < percentVol.length; i++){
-          if(((percentDates[i] - json3.length) / 2) <= 0){
-            tableData[i].volumePercent = null;
-            tableData[i].volumeEstimated = null;
-            tableData[i].timeRemainingEstimated = null;
-          }
-          else {
-            tableData[i].volumePercent = (90 - (i * 10));
-            tableData[i].volumeEstimated = (percentVol[i]).toFixed(3);
-            tableData[i].timeRemainingEstimated = ((percentDates[i] - json3.length) / 2);
-          }
-        }
-
-        tableData.forEach(el=>{
-          if(el.volumePercent != null && el.volumeEstimated !== null && el.timeRemainingEstimated != null){
-            $template.querySelector(".volume-percent").textContent = `${el.volumePercent}%`;
-            $template.querySelector(".volume-estimated").textContent = el.volumeEstimated;
-            $template.querySelector(".time-remaining-estimated").textContent = `${el.timeRemainingEstimated} años`;
-
-            let $clone = d.importNode($template, true);
-            $fragment.appendChild($clone);
-          }
-        });
-        $table.querySelector(".table-body").appendChild($fragment);
-      }
-
-      cleanGraph2 = new Chart($cleanGraph2, cleanGraphConfig);
-      damagedGraph2 = new Chart($damagedGraph2, damagedGraphConfig);
-      wearGraph2 = new Chart($wearGraph2, wearGraphConfig);
-
-      $eolDescription.textContent = msg;
+          json = await res.json();
+      if(!res.ok) throw{status: res.status, statusText: res.statusText};
+      nomVol = Math.round(((json.result[0].nomvol*volMulti)+Number.EPSILON)*1000)/1000;
     } catch (err) {
-      console.log(err);
       let errorCode = err.status || "2316",
           errorStatus = err.statusText || "No se pudo establecer contacto con el servidor",
           message1 = "Error " + errorCode + ": ",
           message2 = errorStatus;
       $tableContainer.insertAdjacentHTML("afterend", `<p><b>${message1}</b>${message2}</p>`);
     }
+    try {
+      let res = await fetch('api/anilox-history', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({id: aniloxId})
+      }),
+          json = await res.json();
+      if(!res.ok) throw{status: res.status, statusText: res.statusText};
+      json = json.result;
+      for(let i = 0; i < json.length; i++){
+        measuredVol[i] = Math.round(((json[i].volume*volMulti)+Number.EPSILON)*1000)/1000;
+        measuredDates[i]= json[i].date;
+      }
+    } catch (err) {
+      let errorCode = err.status || "2316",
+          errorStatus = err.statusText || "No se pudo establecer contacto con el servidor",
+          message1 = "Error " + errorCode + ": ",
+          message2 = errorStatus;
+      $tableContainer.insertAdjacentHTML("afterend", `<p><b>${message1}</b>${message2}</p>`);
+    }
+    let [m, b, estimatedVol, estimatedDates, estimatedPercent] = linearRegression(nomVol, measuredVol, measuredDates);
+    // console.log("m: ", m);
+    // console.log("b: ", b);
+    // console.log("Estimated Vol: ", estimatedVol);
+    // console.log('Estimated Dates: ', estimatedDates);
+    // console.log('Estimated Percent', estimatedPercent);
+    let msg = "";
+    if(estimatedVol === 1000) msg = `El volumen de celda ya se encuentra por debajo del 60% del volumen nominal (${Math.round(((nomVol * 0.6) + Number.EPSILON) * 10) / 10}).`;
+    else if (estimatedVol === 2000) msg = `No se cuenta suficientes datos para realizar una estimación.`;
+    else {
+      const dataEOLGraph = {
+        labels: estimatedDates,
+        datasets: [{
+          type: 'line',
+          label: `Volumen estimado (${ls.getItem("volumeUnit")})`,
+          data: estimatedVol,
+          fill: false,
+          borderColor: 'rgba(255, 0, 0, 0.35)',
+          tension: 0.1,
+          datalabels: {
+            display: true,
+            align: 'top',
+          },
+        }, {
+          type: 'scatter',
+          label: `Volumen medido (${ls.getItem("volumeUnit")})`,
+          data: measuredVol,
+          fill: false,
+          borderColor: 'rgba(0, 0, 255, 0.6)',
+          datalabels: {
+            display: true,
+          },
+        }]
+      };
+      eolGraph = new Chart($eolGraph, {
+        data: dataEOLGraph,
+        options: {
+          plugins: {
+            legend: {
+              display: true,
+              position: "bottom",
+              labels: {
+                font: {
+                  weight: 500,
+                  size: 14,
+                },
+                padding: 15,
+                boxWidth: 30,
+              },
+              reverse: true,
+            },
+            datalabels:{
+              color: '#363949',
+              align: 'right',
+              padding: {
+                right: 7,
+              },
+              font: {
+                size: 13,
+                weight: 500,
+              },
+              clip: false,
+              formatter: function(value, context){
+                if(context.dataset.type === 'line'){
+                  if(estimatedPercent[1].includes(value) && value < measuredVol[measuredVol.length - 1]) return value;
+                  else return '';
+                }
+              },
+            },
+            tooltip: {
+              enabled: true,
+              titleFont: {
+                size: 16,
+                weight: 600,
+              },
+              bodyFont: {
+                size: 14,
+                weight: 500,
+              },
+              footerFont: {
+                size: 16,
+                weight: 300,
+              },
+              callbacks: {  
+                label: function(context){
+                  let data = context.parsed.y;
+                  return 'Volumen: ' + data + ' ' + ls.getItem("volumeUnit");
+                },
+                footer: function(tooltipItems){
+                  let vol = tooltipItems[0].dataset.data[tooltipItems[0].dataIndex];
+                  if(vol === estimatedPercent[1][0] && estimatedPercent[0][0] > measuredDates.length - 1) return `Volumen de celda aprox. 90% del nominal (${Math.round(((nomVol * 0.9) + Number.EPSILON) * 10) / 10})`
+                  if(vol === estimatedPercent[1][1] && estimatedPercent[0][1] > measuredDates.length - 1) return `Volumen de celda aprox. 80% del nominal (${Math.round(((nomVol * 0.8) + Number.EPSILON) * 10) / 10})`
+                  if(vol === estimatedPercent[1][2] && estimatedPercent[0][2] > measuredDates.length - 1) return `Volumen de celda aprox. 70% del nominal (${Math.round(((nomVol * 0.7) + Number.EPSILON) * 10) / 10})`
+                  if(vol === estimatedPercent[1][3] && estimatedPercent[0][3] > measuredDates.length - 1) return `Volumen de celda aprox. 60% del nominal (${Math.round(((nomVol * 0.6) + Number.EPSILON) * 10) / 10})`
+                }
+              },
+            },
+          },
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              ticks: {
+                display: true,
+                font: {
+                  weight: 500,
+                  size: 14,
+                }
+              },
+            },
+            y: {
+              ticks: {
+                stepSize: 0.1,
+                font: {
+                  weight: 500,
+                  size: 14,
+                }
+              },
+            },
+          },
+        }
+      });
+      let tableData = Array.from(Array(estimatedPercent[1].length), ()=>({
+        volumePercent: '',
+        volumeEstimated: '',
+        timeRemainingEstimated: '',
+      }));
+      for (let i = 0; i < estimatedPercent[1].length; i++){
+        if(estimatedPercent[0][i] <= measuredDates.length - 1){
+          tableData[i].volumePercent = null;
+          tableData[i].volumeEstimated = null;
+          tableData[i].timeRemainingEstimated = null;
+        }
+        else {
+          tableData[i].volumePercent = (90 - (i * 10));
+          tableData[i].volumeEstimated = estimatedPercent[1][i];
+          tableData[i].timeRemainingEstimated = (estimatedPercent[0][i] - measuredDates.length + 1) / 2;
+        }
+      }
+      tableData.forEach(el=>{
+        if(el.volumePercent != null && el.volumeEstimated !== null && el.timeRemainingEstimated != null){
+          $template.querySelector(".volume-percent").textContent = `${el.volumePercent}%`;
+          $template.querySelector(".volume-estimated").textContent = el.volumeEstimated;
+          $template.querySelector(".time-remaining-estimated").textContent = `${el.timeRemainingEstimated} años`;
+          let $clone = d.importNode($template, true);
+          $fragment.appendChild($clone);
+        }
+      });
+      $table.querySelector(".table-body").appendChild($fragment);
+      cleanGraph2 = new Chart($cleanGraph2, cleanGraphConfig);
+      damagedGraph2 = new Chart($damagedGraph2, damagedGraphConfig);
+      wearGraph2 = new Chart($wearGraph2, wearGraphConfig);
+      $eolGraphContainer.style.display = "flex";
+      $tableContainer.style.display = "flex";
+    }
+    $eolDescription.textContent = msg;
   }
 
   if(e.target === $closeModalEOLAnilox){

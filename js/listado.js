@@ -66,7 +66,7 @@ const getAll = async ()=>{
       tableData[i].brand = data[0].brand;
       tableData[i].type = data[0].type;
       tableData[i].purchase = data[0].purchase;
-      tableData[i].volume = data[0].volume;
+      tableData[i].volume = Math.round(((data[0].volume*volMulti)+Number.EPSILON)*10)/10;
       tableData[i].last = data[0].last;
       tableData[i].master = data[0].master;
       tableData[i].next = json2.result[i].next;
@@ -158,13 +158,6 @@ const deleteAnilox = async(e)=>{
     if(isDelete){
       try {
         let deleteID = e.target.dataset.id;
-        let options = {
-          method: "DELETE",
-          headers: {
-            "Content-type": "application/json; charset=UTF-8"
-          },
-        };
-
         let res1 = await fetch('api/borrar-anilox', {
           method: 'POST',
           headers: {
@@ -181,8 +174,8 @@ const deleteAnilox = async(e)=>{
             errorStatus = err.statusText || "No se pudo establecer contacto con el servidor",
             message1 = "Error " + errorCode + ": ",
             message2 = errorStatus;
-            $alertContent.textContent = `${message1}: ${message2}`;
-            $modalAlertBox.style.display = "block";
+        $alertContent.textContent = `${message1}: ${message2}`;
+        $modalAlertBox.style.display = "block";
       }
     }
   }
@@ -192,22 +185,20 @@ const quote = async(e) => {
   if (e.target.matches(".quote")) {
     try {
       quoteId = e.target.dataset.id;
-      let res1 = await fetch('/api/listado', {
+      let res = await fetch('/api/listado', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({id: quoteId, mensaje: "quote"})
       }),
-          json1 = await res1.json();
-          
-      // let res = await fetch(`http://anilox-manager:3000/anilox/${quoteId}`),
-      // json = await res.json();
-      if(!res1.ok) throw{status: res1.status, statusText: res1.statusText};
-      quoteType = json1[0].type;
-      quoteNomVol = json1[0].nomvol;
-      quoteScreen = json1[0].screen;
-      quoteAngle = json1[0].angle;
+          json = await res.json();
+      json = json.result;
+      if(!res.ok) throw{status: res.status, statusText: res.statusText};
+      quoteType = json[0].type;
+      quoteNomVol = Math.round(((json[0].nomvol*volMulti)+Number.EPSILON)*10)/10;
+      quoteScreen = Math.round(((json[0].screen*screenMulti)+Number.EPSILON)*10)/10;
+      quoteAngle = json[0].angle;
       $quoteType.textContent = quoteType;
       $quoteAngle.textContent = quoteAngle;
       $quoteVol.textContent = quoteNomVol;
@@ -239,6 +230,8 @@ const quote = async(e) => {
           nomvol: quoteNomVol,
           screen: quoteScreen,
           angle: quoteAngle,
+          volUnit: ls.getItem('volumeUnit'),
+          screenUnit: ls.getItem('screenUnit'),
           reqDate: (new Date(Date.now()).toJSON()).slice(0,10),
           mensaje: "send quote"
         }),

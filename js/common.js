@@ -8,12 +8,7 @@ const $modalAlertBox = d.getElementById("modal-alert-box"),
       $closeAlertBox = d.getElementById("close-alert-box"),
       $alertContent = d.getElementById("alert-content");
 
-// Service Worker
-
-// if('serviceWorker' in navigator){
-//   navigator.serviceWorker.register('./sw.js')
-//   .catch(err => console.warn(err));
-// }
+// Unit text
 
 const $volumeText = d.querySelectorAll(".volumeUnit"),
       $screenText = d.querySelectorAll(".screenUnit"),
@@ -127,6 +122,13 @@ d.addEventListener("click", (e)=>{
   }
 });
 
+// Service Worker
+
+// if('serviceWorker' in navigator){
+//   navigator.serviceWorker.register('./sw.js')
+//   .catch(err => console.warn(err));
+// }
+
 // Dropdown
 
 const dropArchivo = d.getElementById("drop-archivo"),
@@ -135,12 +137,12 @@ const dropArchivo = d.getElementById("drop-archivo"),
       dropAyuda = d.getElementById("drop-ayuda"),
 
       sideMenu = d.querySelector(".left-content"),
-      logo = d.querySelector(".logo");
+      logo = d.querySelector(".logo"),
       ocultarMenu = d.getElementById("ocultar-menu"),
 
       modalSearchAnilox = d.getElementById("modal-search-anilox"),
       buscarAnilox = d.getElementById("buscar-anilox"),
-      closeModalSearchAnilox = d.getElementById("close-search-anilox"),
+      closeModalSearchAnilox = d.getElementById("close-search-anilox");
 
 d.addEventListener("click",e=>{
   if(e.target.matches(".dropbtn")){
@@ -205,7 +207,7 @@ d.addEventListener("click",e=>{
   }
 });
 
-d.addEventListener("DOMContentLoaded",e=>{
+d.addEventListener("DOMContentLoaded",()=>{
   if(ls.getItem("sidebar") === null){
     ls.setItem("sidebar","show");
   }
@@ -226,74 +228,41 @@ const $user = d.getElementById("user-name"),
 
 const $clientLogo = d.getElementById("client-logo");
 
-const getUser = async()=>{
-  try {
-      let res = await fetch("/api/usuarios", {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        }
-      }), //Falta extraer user
-          json = await res.json();
-
-      if(!res.ok) throw{status: res.status, statusText: res.statusText};
-
-      ss.setItem("user",json.sesion_usuario);
-      ss.setItem("level",json.result[0].level);    
-
-    $user.textContent = ss.getItem("user");
-    let level = ss.getItem("level");
-    if(level === "1"){
-      $level.textContent = "Operario";
+const getUserLevelClient = async()=>{
+ try {
+  let res = await fetch("/api/usuarioNivelCliente", {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
     }
-    else if(level === "2"){
-      $level.textContent = "Supervisor";
-    }
-    else if(level === "3"){
-      $level.textContent = "Administrador";
-    }
-  } 
-  catch (err) {
-    console.log(err);
-    let errorCode = err.status || "2316",
+  }),
+      json = await res.json();
+  if(!res.ok) throw{status: res.status, statusText: res.statusText};
+  ss.setItem("user",json.user);
+  ss.setItem("level",json.level);
+  ss.setItem("client", json.client);
+  $clientLogo.src = `./assets/${json.client}-logo.png`;
+  $user.textContent = ss.getItem("user");
+  let level = ss.getItem("level");
+  if(level === "1"){
+    $level.textContent = "Operario";
+  }
+  else if(level === "2"){
+    $level.textContent = "Supervisor";
+  }
+  else if(level === "3"){
+    $level.textContent = "Administrador";
+  }
+ } catch (err) {
+  let errorCode = err.status || "2316",
         errorStatus = err.statusText || "No se pudo establecer contacto con el servidor",
         message1 = "Error " + errorCode + ": ",
         message2 = errorStatus;
     $level.insertAdjacentHTML("afterend", `<p><b>${message1}</b>${message2}</p>`);
-  }
+ }
 }
 
-const getClient = async()=>{
-  try {
-    if(ss.getItem("client") === null){
-      let res = await fetch("/api/clientes", {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        }
-      }),
-      json = await res.json();
-
-      if(!res.ok) throw{status: res.status, statusText: res.statusText};
-
-      ss.setItem("client", json.result[0].name);
-      ss.setItem("logo", json.result[0].logo);
-    }
-
-    $clientLogo.src = ss.getItem("logo");
-  } 
-  catch (err) {
-    console.log(err);
-    let errorCode = err.status || "2316",
-        errorStatus = err.statusText || "No se pudo establecer contacto con el servidor",
-        message1 = "Error " + errorCode + ": ",
-        message2 = errorStatus;
-    $clientName.insertAdjacentHTML("afterend", `<p><b>${message1}</b>${message2}</p>`);
-  }
-}
-
-d.addEventListener("DOMContentLoaded",getUser);
-d.addEventListener("DOMContentLoaded",getClient);
+d.addEventListener("DOMContentLoaded",getUserLevelClient);
 
 //Sidebar
 

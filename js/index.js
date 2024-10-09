@@ -14,6 +14,19 @@ const $statId = d.getElementById("stat-id"),
       $bcmStat = d.getElementById("bcm-stat"),
       $stats = d.querySelector(".stats");
 
+const modalEditDash = d.getElementById("modal-edit-dash"),
+      editarDashboard = d.getElementById("editar-dashboard"),
+      closeModalEditDash = d.getElementById("close-edit-dash"),
+      showStats = d.getElementById("show-stats"),
+      showAnilox = d.getElementById("show-anilox"),
+      showDetails = d.getElementById("show-details"),
+      rightMenu = d.querySelector(".right-content"),
+      centerMenu = d.querySelector(".center-content"),
+      bottomMenu = d.querySelector(".bottom-content"),
+      indexContent = d.querySelector(".index-content"),
+      topFirst = d.getElementById("top-first"),
+      bottomFirst = d.getElementById("bottom-first");
+
 let $tableFirstElement,
     cleanStatChart,
     damagedStatChart,
@@ -199,6 +212,7 @@ const drawIndex = async()=>{
       tableData[i].purchase = data[0].purchase;
       tableData[i].volume = data[0].volume;
       tableData[i].last = data[0].last;
+      tableData[i].volume = Math.round(((data[0].volume*volMulti)+Number.EPSILON)*10)/10;
       tableData[i].next = json2.result[i].next;
       tableData[i].estado = json2.result[i].estado;
     }
@@ -551,13 +565,13 @@ const drawIndex = async()=>{
 
       for(let i = json.length - 1; i >= json.length - lim; i--){
         volLabels[i - (json.length - lim)] = json[i].date;
-        volData[i - (json.length - lim)] = Math.round(((json[i].volume)/1.55) * 10) / 10;
+        volData[i - (json.length - lim)] = Math.round(((json[i].volume*volMulti)+Number.EPSILON)*10)/10;  
       }
 
       const dataBcmStat = {
         labels: volLabels,
         datasets: [{
-          label: 'Volumen (BCM)',
+          label: `Volumen (${ls.getItem("volumeUnit")})`,
           data: volData,
           fill: false,
           borderColor: 'rgba(0, 0, 255, 0.35)',
@@ -620,7 +634,7 @@ const drawIndex = async()=>{
                 label: function(context){
                   let data = context.parsed.y;
   
-                  return 'Volumen: ' + data + ' BCM';
+                  return 'Volumen: ' + data + ' ' + ls.getItem("volumeUnit");
                 },
               },
             },
@@ -722,7 +736,7 @@ const drawStats = async(e)=>{
 
       for(let i = json.length - 1; i >= json.length - lim; i--){
         bcmStatChart.data.labels[i - (json.length - lim)] = json[i].date;
-        bcmStatChart.data.datasets[0].data[i - (json.length - lim)] = json[i].volume;
+        bcmStatChart.data.datasets[0].data[i - (json.length - lim)] = Math.round(((json[i].volume*volMulti)+Number.EPSILON)*10)/10;
       }
       bcmStatChart.update('active');
     } catch (err) {
@@ -811,7 +825,7 @@ const updateTable = async(mode)=>{
         tableData[i].id = data[0].id;
         tableData[i].brand = data[0].brand;
         tableData[i].purchase = data[0].purchase;
-        tableData[i].volume = data[0].volume;
+        tableData[i].volume = Math.round(((data[0].volume*volMulti)+Number.EPSILON)*10)/10;
         tableData[i].last = data[0].last;
         tableData[i].next = validData[i].next;
         tableData[i].estado = validData[i].estado;
@@ -902,3 +916,145 @@ $grafico.addEventListener("click", (e)=>{
 
 d.addEventListener("DOMContentLoaded",drawIndex);
 d.addEventListener("click",drawStats);
+
+d.addEventListener("click", (e)=>{
+  if(e.target == editarDashboard){
+    modalEditDash.style.display = "block";
+    if(ls.getItem("anilox") === "show"){
+      showAnilox.checked = true;
+    }
+    if(ls.getItem("anilox") === "hide"){
+      showAnilox.checked = false;
+    }
+    if(ls.getItem("stats") === "show"){
+      showStats.checked = true;
+    }
+    if(ls.getItem("stats") === "hide"){
+      showStats.checked = false;
+    }
+    if(ls.getItem("details") === "show"){
+      showDetails.checked = true;
+    }
+    if(ls.getItem("details") === "hide"){
+      showDetails.checked = false;
+    }
+    if(ls.getItem("direction") === "normal"){
+      topFirst.checked = true;
+      bottomFirst.checked = false;
+    }
+    if(ls.getItem("direction") === "reverse"){
+      topFirst.checked = false;
+      bottomFirst.checked = true;
+    }
+  }
+
+  if(e.target == closeModalEditDash){
+    modalEditDash.style.display = "none";
+  }
+
+  if(e.target === showAnilox){
+    if(showAnilox.checked === true){
+      rightMenu.style.display = "block";
+      ls.setItem("anilox", "show");
+    }
+    if(showAnilox.checked === false){
+      rightMenu.style.display = "none";
+      ls.setItem("anilox","hide");
+    }
+  }
+
+  if(e.target === showStats){
+    if(showStats.checked === true){
+      centerMenu.style.display = "block";
+      ls.setItem("stats", "show");
+    }
+    if(showStats.checked == false){
+      centerMenu.style.display = "none";
+      ls.setItem("stats", "hide");
+    }
+  }
+
+  if(e.target === showDetails){
+    if(showDetails.checked === true){
+      bottomMenu.style.display = "flex";
+      ls.setItem("details", "show");
+    }
+    if(showDetails.checked === false){
+      bottomMenu.style.display = "none";
+      ls.setItem("details", "hide");
+    }
+  }
+
+  if(e.target === topFirst){
+    if(topFirst.checked === true){
+      indexContent.style.flexDirection = "column";
+      ls.setItem("direction", "normal");
+    }
+  }
+
+  if(e.target === bottomFirst){
+    if(bottomFirst.checked === true){
+      indexContent.style.flexDirection = "column-reverse";
+      ls.setItem("direction", "reverse");
+    }
+  }
+});
+
+d.addEventListener("DOMContentLoaded",()=>{
+  if(ls.getItem("anilox") === null){
+    ls.setItem("anilox","show");
+  }
+  if(ls.getItem("anilox") === "show"){
+    if(rightMenu !== null){
+      rightMenu.style.display = "block";
+    }
+  }
+  if(ls.getItem("anilox") === "hide"){
+    if(rightMenu !== null){
+      rightMenu.style.display = "none";
+    }
+  }
+
+  if(ls.getItem("stats") === null){
+    ls.setItem("stats","show");
+  }
+  if(ls.getItem("stats") === "show"){
+    if(centerMenu !== null){
+      centerMenu.style.display = "block";
+    }
+
+  }
+  if(ls.getItem("stats") === "hide"){
+    if(centerMenu !== null){
+      centerMenu.style.display = "none";
+    }
+  }
+
+  if(ls.getItem("details") === null){
+    ls.setItem("details","show");
+  }
+  if(ls.getItem("details") === "show"){
+    if(bottomMenu !== null){
+      bottomMenu.style.display = "flex";
+    }
+  }
+  if(ls.getItem("details") === "hide"){
+    if(bottomMenu !== null){
+      bottomMenu.style.display = "none";
+    }
+  }
+
+  if(ls.getItem("direction") === null){
+    ls.setItem("direction","normal");
+  }
+  if(ls.getItem("direction") === "normal"){
+    if(indexContent !== null){
+      indexContent.style.flexDirection = "column";
+    }
+  }
+  if(ls.getItem("direction") === "reverse"){
+    if(indexContent !== null){
+      indexContent.style.flexDirection = "column-reverse";
+    }
+  }
+});

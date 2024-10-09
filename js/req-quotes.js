@@ -47,8 +47,8 @@ const getAniloxList = async()=>{
     $aniloxList.querySelector("tbody").appendChild($aniloxListFragment);
     $specificType.textContent = json1[0].type;
     $specificAngle.textContent = `${json1[0].angle}`;
-    $specificVol.textContent = `${json1[0].nomvol}`;
-    $specificScreen.textContent = `${json1[0].screen}`;
+    $specificVol.textContent = `${Math.round(((json1[0].nomvol*volMulti)+Number.EPSILON)*10)/10}`;
+    $specificScreen.textContent = `${Math.round(((json1[0].screen*screenMulti)+Number.EPSILON)*10)/10}`;
   } 
   catch (err) {
     console.log(err);
@@ -63,6 +63,10 @@ const getAniloxList = async()=>{
 const getAniloxData = async(e)=>{
   if(e.target.matches(".id")){
     try {
+      for(let i = 0; i < e.target.parentElement.parentElement.children.length; i++){
+        e.target.parentElement.parentElement.children[i].children[0].classList.remove("selected");
+      }
+      e.target.classList.add("selected");
       $aniloxQuantity.value = "";
       let aniloxId = e.target.textContent;
       let res1 = await fetch('api/listado', {
@@ -78,8 +82,8 @@ const getAniloxData = async(e)=>{
       
       $specificType.textContent = json1[0].type;
       $specificAngle.textContent = `${json1[0].angle}`;
-      $specificVol.textContent = `${(json1[0].nomvol/1.55).toFixed(2)}`;
-      $specificScreen.textContent = `${json1[0].screen}`;
+      $specificVol.textContent = `${Math.round(((json1[0].nomvol*volMulti)+Number.EPSILON)*10)/10}`;
+      $specificScreen.textContent = `${Math.round(((json1[0].screen*screenMulti)+Number.EPSILON)*10)/10}`;
     } 
     catch (err) {
       console.log(err);
@@ -98,7 +102,6 @@ const getAniloxData = async(e)=>{
 const addAniloxToQuote = (e)=>{
   if (e.target === $addToQuote) {
     if ($aniloxQuantity.value !== "" && $aniloxQuantity.value > 0){
-      $quote.style.display = "block";
       let cantItems = $quoteBody.childElementCount;
       $quoteTemplate.querySelector(".specific-item-number").textContent = (cantItems + 1);
       $quoteTemplate.querySelector(".specific-item-quantity").textContent = $aniloxQuantity.value;
@@ -106,6 +109,8 @@ const addAniloxToQuote = (e)=>{
       $quoteTemplate.querySelector(".specific-item-angle").textContent = $specificAngle.textContent;
       $quoteTemplate.querySelector(".specific-item-vol").textContent = $specificVol.textContent;
       $quoteTemplate.querySelector(".specific-item-screen").textContent = $specificScreen.textContent;
+      $quoteTemplate.querySelector(".volumeUnit").textContent = `(${ls.getItem("volumeUnit")}):`;
+      $quoteTemplate.querySelector(".screenUnit").textContent = `(${ls.getItem("screenUnit")}):`;
       let $clone = d.importNode($quoteTemplate, true);
       $quoteBody.appendChild($clone);
       $aniloxQuantity.value = "";
@@ -160,7 +165,9 @@ const requestQuote = async(e)=>{
           },
           body: JSON.stringify({
             reqDate: (new Date(Date.now()).toJSON()).slice(0, 10),
-            req2: req
+            req2: req,
+            volUnit: ls.getItem("volumeUnit"),
+            screenUnit: ls.getItem("screenUnit")
           })
         });
 

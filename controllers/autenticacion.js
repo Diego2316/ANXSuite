@@ -1,9 +1,9 @@
-let sesion_usuario, sesion_empresa; // Variables para almacenar el usuario y la empresa de la sesión actual
+let sesion_usuario, sesion_empresa, sesion_level; // Variables para almacenar el usuario y la empresa de la sesión actual
 const mysql = require('mysql'); // Necesario para trabajar con MySQL
 require('dotenv').config(); // Necesario para leer las variables de entorno
 const jwt = require('jsonwebtoken');  // Necesario para crear tokens de acceso
 const path = require('path');
-const { Chart } = require('chart.js/auto');
+const { Chart, DecimationAlgorithm } = require('chart.js/auto');
 const ChartDataLabels = require('chartjs-plugin-datalabels');
 Chart.register(ChartDataLabels);
 const { createCanvas, loadImage } = require('canvas');
@@ -52,6 +52,7 @@ async function login(req, res) {  // función redirigida desde api/login
         if (result.length > 0) {
             sesion_usuario =  result[0].user_l;
             sesion_empresa = result[0].empresa;
+            sesion_level = result[0].level;
             console.log(result[0].user_l);
             // SI SE ENCUENTRA EL USUARIO Y LA CONTRASEÑA EN LA BD, SE CREA UN TOKEN DE ACCESO
             const token = jwt.sign({ user: result[0].user_l, sesion_usuario: sesion_usuario,
@@ -590,7 +591,7 @@ async function tablaAniloxList(req, res) {
               if (errC) throw errC;
               let aux = resultC.length > 0 ? resultC.length + 1 : 1; // Si ya existe se suma 1 al id máximo, caso contrario id se inicia en 1
               const sqlInsertHistory = 'INSERT INTO anilox_history (anilox, id, date, volume, diagnostico, report, empresa) VALUES (?,?,?,?,?,?,?)'
-              db.query(sqlInsertHistory, [id, aux, last, volume, diagnostico, "https://www.africau.edu/images/default/sample.pdf", sesion_empresa], (errD, resultD) => {
+              db.query(sqlInsertHistory, [id, aux, last, volume, diagnostico, "https://pdfobject.com/pdf/sample.pdf", sesion_empresa], (errD, resultD) => {
                 if (errD) throw errD;                
                 return res.status(200).send({ status: "Success", message: "Anilox actualizado correctamente" });
               });
@@ -620,7 +621,7 @@ async function tablaAniloxList(req, res) {
       });  
     }
     else {
-      const sql = 'SELECT id, brand, type, purchase, recorrido, nomvol, volume, last FROM anilox_list WHERE empresa=?';
+      const sql = 'SELECT id, brand, type, purchase, recorrido, nomvol, volume, last, master FROM anilox_list WHERE empresa=?';
       const result = await queryDB(sql, [sesion_empresa]);
       result.forEach(row => {
         if(row.purchase) {
@@ -735,7 +736,7 @@ async function tablaAniloxHistory(req, res) {
 
 async function cotizaciones(req, res) {
   try {
-    let { reqDate, req2, mensaje, type, nomvol, screen, angle } = req.body;
+    let { reqDate, req2, mensaje, type, nomvol, screen, angle, volUnit, screenUnit } = req.body;
 
     let transporter = nodemailer.createTransport({
       service: 'gmail',
@@ -752,21 +753,22 @@ async function cotizaciones(req, res) {
       db.query(sql_q0, ["single"], (err, result) => {
         if (err) throw err;
         let aux3 = result.length > 0 ? result.length + 1 : 1; // Si ya existe se suma 1 al id máximo, caso contrario id se inicia en 1
-        const sql_q1 = 'INSERT INTO solicitudes (tipo_solicitud, id, posicion, type, nomvol, screen, angle, amount, empresa, reqDate) VALUES (?,?,?,?,?,?,?,?)';
-        db.query(sql_q1, ["single", aux3, 0, type, nomvol, screen, angle, req2[0].amount, sesion_empresa, reqDate], (err, result) => {
+        const sql_q1 = 'INSERT INTO solicitudes (tipo_solicitud, id, posicion, type, nomvol, screen, angle, amount, empresa, reqDate) VALUES (?,?,?,?,?,?,?,?,?,?)';
+        db.query(sql_q1, ["single", aux3, 0, type, nomvol, screen, angle, 1, sesion_empresa, reqDate], (err, result) => {
           if (err) throw err;
         });
         let mailOptions = {
           from: 'anxsuite@gmail.com',
-          to: 'mario.molina@qanders.com; enzo.carpio@qanders.com; rodrigo.ma@qanders.com',
+          // to: 'mario.molina@qanders.com; enzo.carpio@qanders.com; rodrigo.ma@qanders.com',
+          to: 'diego.sanchez@qanders.com',
           subject: 'ANX Suite - Solicitud de cotización de rodillos ' + sesion_empresa,
-          html: 'El cliente ' + sesion_empresa + ' ha solicitado una cotización de ' + req2[i].amount + ' rodillos anilox.<br>' + 
+          html: 'El cliente ' + sesion_empresa + ' ha solicitado una cotización de ' + '1' + ' rodillos anilox.<br>' + 
                 'Las características del rodillo son:<br><br>' +
                 '<ul>' +
                 '<li><strong>Tipo:</strong> ' + type + '</li>' +
-                '<li><strong>Volumen:</strong> ' + nomvol + '</li>' +
-                '<li><strong>Lineatura:</strong> ' + screen + '</li>' +
-                '<li><strong>Ángulo:</strong> ' + angle + '</li>' +
+                '<li><strong>Volumen (' + volUnit + '):</strong> ' + nomvol + '</li>' +
+                '<li><strong>Lineatura (' + screenUnit + '):</strong> ' + screen + '</li>' +
+                '<li><strong>Ángulo (°):</strong> ' + angle + '</li>' +
                 '</ul>',
         };  
         transporter.sendMail(mailOptions);
@@ -788,17 +790,18 @@ async function cotizaciones(req, res) {
           'Las características del rodillo son:<br><br>' +
           '<ul>' +
           '<li><strong>Tipo:</strong> ' + req2[i].type + '</li>' +
-          '<li><strong>Volumen:</strong> ' + req2[i].nomvol + '</li>' +
-          '<li><strong>Lineatura:</strong> ' + req2[i].screen + '</li>' +
-          '<li><strong>Ángulo:</strong> ' + req2[i].angle + '</li>' +
+          '<li><strong>Volumen (' + volUnit + '):</strong> ' + req2[i].nomvol + '</li>' +
+          '<li><strong>Lineatura (' + screenUnit + '):</strong> ' + req2[i].screen + '</li>' +
+          '<li><strong>Ángulo (°):</strong> ' + req2[i].angle + '</li>' +
           '</ul>'
           
-          string2 = string2 + ''+string1[i]+'<br>';
+          string2 += string1[i]+'<br>';
         }
 
         let mailOptions = {
           from: 'anxsuite@gmail.com',
-          to: 'mario.molina@qanders.com; enzo.carpio@qanders.com; rodrigo.ma@qanders.com',
+          // to: 'mario.molina@qanders.com; enzo.carpio@qanders.com; rodrigo.ma@qanders.com',
+          to: 'diego.sanchez@qanders.com',
           subject: 'ANX Suite - Solicitud de cotización de rodillos - ' + sesion_empresa,
           html: string2
         }
@@ -843,17 +846,8 @@ async function borrarAnilox(req, res) {
   }
 }
 
-async function tablaUsuarios(req, res) {
-  try {
-    const sql = 'SELECT * FROM usuarios';
-    db.query(sql, (err, result) => {
-      if (err) throw err;
-      return res.status(200).send({ status: "Success", message: "Estado", result, sesion_usuario });
-    });
-  } catch {
-    console.log(error);
-    return res.status(500).send({status: "Error", message: "Error al obtener los datos del cliente"});
-  }
+async function usuarioNivelCliente(req, res) {
+    return res.status(200).send({status: "Success", message: "Estado", user: `${sesion_usuario}`, level: `${sesion_level}`, client: `${sesion_empresa}`});
 }
 
 async function tablaClientes(req, res) {
@@ -1736,4 +1730,4 @@ function generarPdf(req, res) {
 }
 
 module.exports = { login, registro, registro_licencia, password_recovery, soloAdmin, soloPublico, soloSuperAdmin, tablaAniloxAnalysis, tablaAniloxList,
-                   cotizaciones, tablaUsuarios, tablaClientes, tablaLicencias, tablaAniloxHistory, borrarAnilox, generarPdf };
+                   cotizaciones, usuarioNivelCliente, tablaClientes, tablaLicencias, tablaAniloxHistory, borrarAnilox, generarPdf };
