@@ -137,14 +137,33 @@ const load = e=>{
   }
 }
 
+const b64toBlob = (b64Data, contentType='application/pdf', sliceSize=512) => {
+  const byteCharacters = atob(b64Data);
+  const byteArrays = [];
+  for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+    const slice = byteCharacters.slice(offset, offset + sliceSize);
+    const byteNumbers = new Array(slice.length);
+    for (let i = 0; i < slice.length; i++) {
+      byteNumbers[i] = slice.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    byteArrays.push(byteArray);
+  }
+  const blob = new Blob(byteArrays, {type: contentType});
+  const blobUrl = URL.createObjectURL(blob);
+  return blobUrl;
+}
+
 const showModalPdf = e=>{
   if(e.target.matches(".master")){
-    const base64 = e.target.dataset.base64;
-    $masterPdf.setAttribute("data", base64);
+    const data = b64toBlob(e.target.dataset.base64.slice(28));
+    //const data = e.target.dataset.base64;
+    $masterPdf.setAttribute("data", data);
     $modalPdf.style.display = "block";
   }
   if(e.target === $closeModalPdf){
     $modalPdf.style.display = "none";
+    $masterPdf.setAttribute("data","");
   }
 }
 

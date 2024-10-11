@@ -39,6 +39,7 @@ Chart.defaults.font.family = 'Rajdhani';
 const getData = (json, id)=>{
   return json.filter(el => el.id === id);
 }
+
 const drawIndex = async()=>{
   try {
     //Fetch call listado de anilox
@@ -73,16 +74,22 @@ const drawIndex = async()=>{
           label: 'Buen Estado',
           data: [json2.numBuenos],
           backgroundColor: "rgba(170,187,17,0.35)",
+          borderRadius: 25,
+          borderSkipped: 'middle',
         },
         {
           label: 'Estado Aceptable',
           data: [json2.numMedios],
           backgroundColor: "rgba(255,186,38,0.35)",
+          borderRadius: 25,
+          borderSkipped: 'middle',
         },
         {
           label: 'Mal Estado',
           data: [json2.numMalos],
           backgroundColor: "rgba(255,24,24,0.35)",
+          borderRadius: 25,
+          borderSkipped: 'middle',
         },
       ],
     };
@@ -262,17 +269,36 @@ const drawIndex = async()=>{
     $table.querySelector("tbody").appendChild($fragment);
     
     //get primer item de la tabla
-    $tableFirstElement = json2.primero;
+    $tableFirstElement = $tableBody.firstElementChild.firstElementChild.textContent;
     $statId.textContent = $tableFirstElement;
-
-    //draw doughnut stats
-    let tapadas = parseFloat(json2.tapadas),
+  } catch (err) {
+    let errorCode = err.status || "2316",
+        errorStatus = err.statusText || "No se pudo establecer contacto con el servidor",
+        message1 = "Error " + errorCode + ": ",
+        message2 = errorStatus;
+    $table.insertAdjacentHTML("afterend", `<p><b>${message1}</b>${message2}</p>`);
+    $grafico.insertAdjacentHTML("afterend", `<p><b>${message1}</b>${message2}</p>`);
+    // $stats.insertAdjacentHTML("afterend", `<p><b>${message1}</b>${message2}</p>`);
+  }
+  
+  try {
+    //draw doughnut stats for first element of table
+    let res = await fetch('api/analysis', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({id: $tableFirstElement})
+    }),
+        json = await res.json();
+    if(!res.ok) throw{status: res.status, statusText: res.statusText};
+    json = json.result[0];
+    let tapadas = parseFloat(json.tapadas),
         limpias = 100 - tapadas,
-        danadas = parseFloat(json2.danadas),
+        danadas = parseFloat(json.danadas),
         sinDano = 100 - danadas,
-        desgastadas = parseFloat(json2.desgastadas),
+        desgastadas = parseFloat(json.desgastadas),
         sinDesgaste = 100 - desgastadas;
-
     const dataCleanStat = {
       labels: [
         'Limpias',
@@ -287,7 +313,6 @@ const drawIndex = async()=>{
         hoverOffset: 4,
       }],
     };
-
     const dataDamagedStat = {
       labels: [
         'Sin Daño',
@@ -302,7 +327,6 @@ const drawIndex = async()=>{
         hoverOffset: 4,
       }]
     };
-
     const dataWearStat = {
       labels: [
         'Sin Desgaste',
@@ -317,7 +341,6 @@ const drawIndex = async()=>{
         hoverOffset: 4,
       }]
     };
-
     cleanStatChart = new Chart($cleanStat, {
       type: "doughnut",
       data: dataCleanStat,
@@ -390,7 +413,6 @@ const drawIndex = async()=>{
         maintainAspectRatio: false,
       }
     });
-    
     damagedStatChart = new Chart($damagedStat, {
       type: "doughnut",
       data: dataDamagedStat,
@@ -463,7 +485,6 @@ const drawIndex = async()=>{
         maintainAspectRatio: false,
       }
     });
-
     wearStatChart = new Chart($wearStat, {
       type: "doughnut",
       data: dataWearStat,
@@ -537,17 +558,16 @@ const drawIndex = async()=>{
       }
     });
   } catch (err) {
+    console.log(err);
     let errorCode = err.status || "2316",
         errorStatus = err.statusText || "No se pudo establecer contacto con el servidor",
         message1 = "Error " + errorCode + ": ",
         message2 = errorStatus;
-    $table.insertAdjacentHTML("afterend", `<p><b>${message1}</b>${message2}</p>`);
-    $grafico.insertAdjacentHTML("afterend", `<p><b>${message1}</b>${message2}</p>`);
     $stats.insertAdjacentHTML("afterend", `<p><b>${message1}</b>${message2}</p>`);
   }
-  
+
   try {
-      //draw line stat -- tableFirstElement ES EL PRIMER ID: AA0000001
+      //draw line stat for first element of table
       let res = await fetch('api/anilox-history', {
         method: 'POST',
         headers: {

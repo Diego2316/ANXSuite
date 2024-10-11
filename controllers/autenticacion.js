@@ -538,6 +538,16 @@ async function tablaAniloxList(req, res) {
     if (mensaje == "getAniloxList") {
       const SQL_quote = 'SELECT id, brand, type, purchase, recorrido, nomvol, volume, screen, angle, last FROM anilox_list WHERE empresa = ?';
       const result = await queryDB(SQL_quote, [sesion_empresa]);
+      result.forEach(row => {
+        if(row.purchase) {
+          let date = new Date(row.purchase);
+          row.purchase = date.toISOString().split('T')[0]; // Esto devolverá la fecha en formato 'YYYY-MM-DD'
+        }
+        if(row.last) {
+          let date2 = new Date(row.last);
+          row.last = date2.toISOString().split('T')[0]; // Esto devolverá la fecha en formato 'YYYY-MM-DD'
+        }
+      });
       return res.status(200).send({ status: "Success", message: "Estado", result });
     } 
     else if (mensaje == "getAniloxData") {
@@ -681,9 +691,7 @@ async function tablaAniloxAnalysis(req, res) {
             el.next = date.toISOString().split('T')[0]; // Esto devolverá la fecha en formato 'YYYY-MM-DD'
           }
         });
-        let primero = result[0].id;      let tapadas = result[0].tapadas;
-        let danadas = result[0].danadas; let desgastadas = result[0].desgastadas;
-        return res.status(200).send({ status: "Success", message: "Estado", numBuenos, numMedios, numMalos, primero, tapadas, danadas, desgastadas, result });
+        return res.status(200).send({ status: "Success", message: "Estado", numBuenos, numMedios, numMalos, result });
       });
     }
   }
