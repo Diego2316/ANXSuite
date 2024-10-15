@@ -560,6 +560,11 @@ async function tablaAniloxList(req, res) {
       const result = await queryDB(SQL_quote, [id]);
       return res.status(200).send({ status: "Success", message: "Estado", result });
     }
+    else if(id && mensaje === "master"){
+      const SQL_quote = 'SELECT id, master FROM anilox_list WHERE id = ?';
+      const result = await queryDB(SQL_quote, [id]);
+      return res.status(200).send({ status: "Success", message: "Estado", result });
+    }
 
     if(id && !brand && !eol) {
       const sql = 'SELECT * FROM anilox_list WHERE id=? and empresa=?';
@@ -636,7 +641,7 @@ async function tablaAniloxList(req, res) {
       return res.status(200).send({ status: "Success", message: "Estado", result });
     }
     else {
-      const sql = 'SELECT id, brand, type, purchase, recorrido, nomvol, volume, last, master FROM anilox_list WHERE empresa=?';
+      const sql = 'SELECT id, brand, type, purchase, recorrido, nomvol, volume, last FROM anilox_list WHERE empresa=?';
       const result = await queryDB(sql, [sesion_empresa]);
       result.forEach(row => {
         if(row.purchase) {
@@ -886,6 +891,187 @@ async function tablaLicencias(req, res) {
   } catch {
     console.log(error);
     return res.status(500).send({status: "Error", message: "Error al obtener los datos del cliente"});
+  }
+}
+
+async function superAnalysis(req, res) {
+  try {
+    const { client, id, mensaje } = req.body;
+    if(client && mensaje === "list"){
+      const sql = 'SELECT * FROM anilox_analysis WHERE empresa = ?';
+      db.query(sql, [client], (err, result) => {
+        if(err) throw err;
+        result.forEach(row => {
+          if(row.next) {
+            let date = new Date(row.next);
+            row.next = date.toISOString().split('T')[0];
+          }
+        });
+        return res.status(200).send({status: "Success", message: "Estado", result});
+      });
+    }
+    else if(client && id && mensaje === "detail"){
+      const sql = 'SELECT * FROM anilox_analysis WHERE empresa = ? AND id = ?';
+      db.query(sql, [client, id], (err, result) => {
+        if(err) throw err;
+        result.forEach(row => {
+          if(row.next) {
+            let date = new Date(row.next);
+            row.next = date.toISOString().split('T')[0];
+          }
+        });
+        return res.status(200).send({status: "Success", message: "Estado", result});
+      });
+    }
+    else{
+      const sql = 'SELECT * FROM anilox_analysis';
+      db.query(sql, (err, result) => {
+        if(err) throw err;
+        result.forEach(row => {
+          if(row.next) {
+            let date = new Date(row.next);
+            row.next = date.toISOString().split('T')[0];
+          }
+        });
+        return res.status(200).send({status: "Success", message: "Estado", result});
+      });
+    }
+  } catch {
+    console.log(error);
+    return res.status(500).send({status: "Error", message: "Error al obtener los datos"});
+  }
+}
+
+async function superListado(req, res) {
+  try {
+    const { client, mensaje, id } = req.body;
+    if(mensaje === "client" && client){
+      const sql = 'SELECT id, brand, empresa FROM anilox_list WHERE empresa=?';
+      db.query(sql, [client], (err, result) =>{
+        if(err) throw err;
+        return res.status(200).send({status: "Success", message: "Estado", result});
+      });
+    }
+    else if(mensaje === "quote" && id && client){
+      const sql = 'SELECT id, type, nomvol, screen, angle FROM anilox_list WHERE empresa=? AND id = ?';
+      db.query(sql, [client, id], (err, result) =>{
+        if(err) throw err;
+        return res.status(200).send({status: "Success", message: "Estado", result});
+      });
+    }
+    else if(mensaje === "master" && id){
+      const sql = 'SELECT id, master FROM anilox_list WHERE id = ?';
+      db.query(sql, [id], (err, result) => {
+        if(err) throw err;
+        return res.status(200).send({status: "Success", message: "Estado", result});
+      });
+    }
+    else if(mensaje === "ids"){
+      const sql = 'SELECT id, brand, empresa FROM anilox_list'
+      db.query(sql, (err, result) => {
+        if(err) throw err;
+        return res.status(200).send({status: "Success", message: "Estado", result});
+      });
+    }
+    else if(id && client, mensaje === 'detail'){
+      const sql = 'SELECT id, brand, type, purchase, recorrido, nomvol, volume, depth, opening, wall, screen, angle, last, patron, revision FROM anilox_list WHERE empresa = ? AND id = ?';
+      db.query(sql, [client, id], (err, result) => {
+        if(err) throw err;
+        result.forEach(row => {
+          if(row.purchase) {
+            let date = new Date(row.purchase);
+            row.purchase = date.toISOString().split('T')[0];
+          }
+          if(row.last) {
+            let date = new Date(row.last);
+            row.last = date.toISOString().split('T')[0];
+          }
+        });
+        return res.status(200).send({status: 'Success', message: "Estado", result});
+      });
+    }
+    else if(client && id && mensaje === "eol"){
+      const sql = 'SELECT id, nomvol FROM anilox_list WHERE empresa = ? AND id = ?';
+      db.query(sql, [client, id], (err, result) => {
+        if(err) throw err;
+        return res.status(200).send({status: 'Success', message: "Estado", result});
+      });
+    }
+    else{
+      const sql = 'SELECT id, brand, type, purchase, recorrido, nomvol, volume, last, empresa FROM anilox_list WHERE empresa=?';
+      db.query(sql, [client], (err, result) =>{
+        if(err) throw err;
+        result.forEach(row => {
+          if(row.purchase) {
+            let date = new Date(row.purchase);
+            row.purchase = date.toISOString().split('T')[0];
+          }
+          if(row.last) {
+            let date = new Date(row.last);
+            row.last = date.toISOString().split('T')[0];
+          }
+        });
+        return res.status(200).send({status: "Success", message: "Estado", result});
+      });
+    }
+  } catch {
+    console.log(error);
+    return res.status(500).send({status: "Error", message: "Error al obtener los datos"});
+  }
+}
+
+async function superHistory(req, res) {
+  try {
+    const { client, id , mensaje, date} = req.body;
+    if(client && id && mensaje === "report-list"){
+      const sql = 'SELECT anilox, date, report FROM anilox_history WHERE empresa = ? AND anilox = ?';
+      db.query(sql, [client, id], (err, result) => {
+        if(err) throw err;
+        result.forEach(row => {
+          if(row.date) {
+            let date = new Date(row.date);
+            row.date = date.toISOString().split('T')[0];
+          }
+        });
+        return res.status(200).send({status: "Success", message: "Estado", result});
+      });
+    }
+    else if(client && id && date && mensaje === "report"){
+      const sql = 'SELECT anilox, report FROM anilox_history WHERE empresa = ? AND anilox = ? AND date = ?';
+      db.query(sql, [client, id, date], (err, result) => {
+        if(err) throw err;
+        return res.status(200).send({status: "Success", message: "Estado", result});
+      });
+    }
+    else if(client && id && mensaje === "detail"){
+      const sql = 'SELECT anilox, date, volume, diagnostico FROM anilox_history WHERE empresa = ? AND anilox = ?';
+      db.query(sql, [client, id], (err, result) => {
+        if(err) throw err;
+        result.forEach(row => {
+          if(row.date) {
+            let date = new Date(row.date);
+            row.date = date.toISOString().split('T')[0];
+          }
+        });
+        return res.status(200).send({status: "Success", message: "Estado", result});
+      });
+    }
+    else{
+      const sql = 'SELECT * FROM anilox_history';
+      db.query(sql, (err, result) => {
+        if(err) throw err;
+        result.forEach(row => {
+          if(row.date) {
+            let date = new Date(row.date);
+            row.date = date.toISOString().split('T')[0];
+          }
+        });
+        return res.status(200).send({status: "Success", message: "Estado", result});
+      });
+    }
+  } catch {
+    console.log(error);
+    return res.status(500).send({status: "Error", message: "Error al obtener los datos"});
   }
 }
 
@@ -1743,4 +1929,4 @@ function generarPdf(req, res) {
 }
 
 module.exports = { login, registro, registro_licencia, password_recovery, soloAdmin, soloPublico, soloSuperAdmin, tablaAniloxAnalysis, tablaAniloxList,
-                   cotizaciones, usuarioNivelCliente, tablaClientes, tablaLicencias, tablaAniloxHistory, borrarAnilox, generarPdf };
+                   cotizaciones, usuarioNivelCliente, tablaClientes, tablaLicencias, tablaAniloxHistory, borrarAnilox, generarPdf, superAnalysis, superListado, superHistory };

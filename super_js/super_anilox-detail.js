@@ -71,52 +71,34 @@ let aniloxData, aniloxHistory, aniloxAnalysis;
 let cleanGraph, cleanGraphConfig, damagedGraph, damagedGraphConfig, wearGraph, wearGraphConfig, bcmChart, eolGraph, cleanGraph2, damagedGraph2, wearGraph2;
 
 const getCompleteList = async() =>{
-  let aniloxList = [];
-  let clientList = [];
-  let completeList = [];
-  let currentIndex;
-  let item = {
-    client: '',
-    id: '',
-    brand: '',
-  };
+  let completeList, currentIndex;
   try {
-    let res = await fetch("http://anx-suite:3000/clients"),
+    let res = await fetch('/api/super-listado', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({mensaje: "ids"}),
+    }),
         json = await res.json();
     if(!res.ok) throw{status: res.status, statusText: res.statusText};
-    clientList = Object.values(json[0]);
+    completeList = json.result;
   } catch (err) {
     errorMessage(err);
   }
-  for(let i = 0; i < clientList.length; i++){
-    try {
-      let res = await fetch(`http://anx-suite:3000/${clientList[i]}`),
-          json = await res.json();
-      if(!res.ok) throw{status: res.status, statusText: res.statusText};
-      aniloxList.push(json);
-    } catch (err) {
-      errorMessage(err);  
+  completeList.some((el, index) => {
+    if(el.id === aniloxId){
+      currentIndex = index;
+      return true;
     }
-  }
-  for(let i = 0; i < clientList.length; i++){
-    for(let j = 0; j < aniloxList[i].length; j++){
-        let newItem = {...item};
-        newItem.client = clientList[i];
-        newItem.id = aniloxList[i][j].id;
-        newItem.brand = aniloxList[i][j].brand;
-        if(newItem.id === aniloxId){
-          currentIndex = i*aniloxList[i].length + j;
-        }
-        completeList.push(newItem);
-    }
-  }
+  })
   if(currentIndex > 0){
-    $prevAnilox.dataset.load = `${completeList[currentIndex - 1].client},${completeList[currentIndex - 1].id},${completeList[currentIndex - 1].brand}`;
+    $prevAnilox.dataset.load = `${completeList[currentIndex - 1].empresa},${completeList[currentIndex - 1].id},${completeList[currentIndex - 1].brand}`;
     $prevAnilox.title = completeList[currentIndex - 1].id;
     $prevAnilox.style.cursor = "pointer";
   }
   if(currentIndex < completeList.length - 1){
-    $nextAnilox.dataset.load = `${completeList[currentIndex + 1].client},${completeList[currentIndex + 1].id},${completeList[currentIndex + 1].brand}`;
+    $nextAnilox.dataset.load = `${completeList[currentIndex + 1].empresa},${completeList[currentIndex + 1].id},${completeList[currentIndex + 1].brand}`;
     $nextAnilox.title = completeList[currentIndex + 1].id;
     $nextAnilox.style.cursor = "pointer";
   }
@@ -131,28 +113,46 @@ const getCompleteList = async() =>{
 const drawAll = async()=>{
   $aniloxId.textContent = `${aniloxBrand} - ${aniloxId} - ${aniloxClient}`;
   try {
-    let res = await fetch(`http://anx-suite:3000/${aniloxClient}/${aniloxId}`),
+    let res = await fetch('/api/super-listado', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({id: aniloxId, client: aniloxClient, mensaje: 'detail'}),
+    }),
         json = await res.json();
     if(!res.ok) throw{status: res.status, statusText: res.statusText};
-    aniloxData = json;
+    aniloxData = json.result[0];
   } catch (err) {
-    errorMessage(err)
+    errorMessage(err);
   }
   try {
-    let res = await fetch(`http://anx-suite:3002/${aniloxClient}/${aniloxId}`),
+    let res = await fetch('/api/super-history', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({id: aniloxId, client: aniloxClient, mensaje: 'detail'}),
+    }),
         json = await res.json();
     if(!res.ok) throw{status: res.status, statusText: res.statusText};
-    aniloxHistory = json.history;
+    aniloxHistory = json.result;
   } catch (err) {
-    errorMessage(err)
+    errorMessage(err);
   }
   try {
-    let res = await fetch(`http://anx-suite:3003/${aniloxClient}/${aniloxId}`),
+    let res = await fetch('/api/super-analysis', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({id: aniloxId, client: aniloxClient, mensaje: 'detail'}),
+    }),
         json = await res.json();
     if(!res.ok) throw{status: res.status, statusText: res.statusText};
-    aniloxAnalysis = json;
+    aniloxAnalysis = json.result[0];
   } catch (err) {
-    errorMessage(err)
+    errorMessage(err);
   }
   //top
   $dataBrand.textContent = aniloxData.brand;
@@ -594,54 +594,145 @@ const viewMore = (e)=>{
   }
 }
 
-const estimarVida = (e)=>{
+const dateEstimation = (measuredVol, measuredDates, estimatedVol)=>{
+  let estimatedDates = measuredDates.map(el => el);
+  for(let i = 0; i < estimatedVol.length - measuredVol.length; i++){
+    let last = `${estimatedDates[estimatedDates.length - 1]} 00:00:00`;
+    last = new Date(last);
+    let next = new Date(last.setMonth(last.getMonth() + 6)),
+        year = String(next.getFullYear()),
+        month = String(next.getMonth() + 1),
+        day = String(next.getDate());
+    month.length < 2 ? month = `0${month}` : month = month;
+    day.length < 2 ? day = `0${day}` : day = day;
+    next = [year, month, day].join('-');
+    estimatedDates.push(next);
+  }
+  return estimatedDates;
+}
+
+const percentEstimation = (nomVol, estimatedVol)=>{
+  let estimatedIndex = [], estimatedValue = [];
+  estimatedVol.some((el, index) => {
+    if(el <= 0.9*nomVol){
+      estimatedIndex.push(index);
+      estimatedValue.push(el);
+      return true;
+    }
+  });
+  estimatedVol.some((el, index) => {
+    if(el <= 0.8*nomVol){
+      estimatedIndex.push(index);
+      estimatedValue.push(el);
+      return true;
+    }
+  });
+  estimatedVol.some((el, index) => {
+    if(el <= 0.7*nomVol){
+      estimatedIndex.push(index);
+      estimatedValue.push(el);
+      return true;
+    }
+  });
+  estimatedIndex.push(estimatedVol.length - 1);
+  estimatedValue.push(estimatedVol[estimatedVol.length - 1]);
+  let estimatedPercent = {0: estimatedIndex, 1: estimatedValue};
+  return estimatedPercent;
+}
+
+const linearRegression = (nomVol, measuredVol, measuredDates)=>{
+  let lim = 0.6*nomVol, estimatedVol = [], estimatedDates = [], estimatedPercent = {};
+  let m = 0, b = 0;
+  let xSum = 0, ySum = 0, xxSum = 0, xySum = 0, count = measuredVol.length;
+  if(measuredVol[measuredVol.length - 1] > lim){
+    for(let i = 0; i < count ; i++){
+      xSum += i;
+      ySum += measuredVol[i];
+      xxSum += i * i;
+      xySum += i * measuredVol[i];
+    }
+    m = (count * xySum - xSum * ySum) / (count * xxSum - xSum * xSum);
+    if(m <= -0.01){
+      b = (ySum / count) - (m * xSum) / count;
+      let h = ((lim - b) / m) + 10;
+      for(let i = 0; i < h; i++){
+        let vol = Math.round(((i * m + b) + Number.EPSILON) * 1000) / 1000;
+        estimatedVol.push(vol);
+        if(estimatedVol[i] < lim){
+          break;
+        }
+      }
+      estimatedPercent = percentEstimation(nomVol, estimatedVol);
+      estimatedDates = dateEstimation(measuredVol, measuredDates, estimatedVol);
+    }
+    else estimatedVol = 2000;
+  }
+  else estimatedVol = 1000;
+  return [m, b, estimatedVol, estimatedDates, estimatedPercent];
+}
+
+const estimarVida = async(e)=>{
   if(e.target === $estimarVida){
-    let eolData = [];
-    for(let i = 0; i < aniloxAnalysis.eol.length; i++){
-      eolData[i] = aniloxAnalysis.eol[i];
+    $modalEOLAnilox.style.display = "block";
+    let nomVol;
+    let measuredVol = [];
+    let measuredDates = [];
+    try {
+      let res = await fetch('api/super-listado', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({id: aniloxId, client: aniloxClient, mensaje: "eol"})
+      }),
+          json = await res.json();
+      if(!res.ok) throw{status: res.status, statusText: res.statusText};
+      nomVol = json.result[0].nomvol;
+    } catch (err) {
+      let errorCode = err.status || "2316",
+          errorStatus = err.statusText || "No se pudo establecer contacto con el servidor",
+          message1 = "Error " + errorCode + ": ",
+          message2 = errorStatus;
+      $tableContainer.insertAdjacentHTML("afterend", `<p><b>${message1}</b>${message2}</p>`);
     }
-    let msg;
-    if(eolData[0] == 1000){
-      msg = `El volumen de celda ya se encuentra por debajo del 60% del volumen nominal (${Math.round(((aniloxData.nomvol * 0.6) + Number.EPSILON) * 10) / 10}).`;
+    try {
+      let res = await fetch('api/super-history', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({id: aniloxId, client: aniloxClient, mensaje: "detail"})
+      }),
+          json = await res.json();
+      if(!res.ok) throw{status: res.status, statusText: res.statusText};
+      json = json.result;
+      for(let i = 0; i < json.length; i++){
+        measuredVol[i] = json[i].volume
+        measuredDates[i]= json[i].date;
+      }
+    } catch (err) {
+      let errorCode = err.status || "2316",
+          errorStatus = err.statusText || "No se pudo establecer contacto con el servidor",
+          message1 = "Error " + errorCode + ": ",
+          message2 = errorStatus;
+      $tableContainer.insertAdjacentHTML("afterend", `<p><b>${message1}</b>${message2}</p>`);
     }
-    else if (eolData[0] == 2000){
-      msg = `No se cuenta suficientes datos para realizar una estimación.`;
-    }
-    else{
-      $eolGraphContainer.style.display = "flex";
-      $tableContainer.style.display = "flex";
-      let eolDates = [];
-      let volData = [];
-      let percentDates = aniloxAnalysis.percent[0];
-      let percentVol = [];
-      for(let i = 0; i < aniloxAnalysis.percent[1].length; i++){
-        percentVol[i] = aniloxAnalysis.percent[1][i];
-      }
-      for(let i = 0; i < aniloxHistory.length; i++){
-        eolDates[i] = aniloxHistory[i].date;
-        volData[i] = aniloxHistory[i].volume;
-      }
-      for(let i = 0; i < aniloxAnalysis.eol.length - aniloxHistory.length; i++){
-        let last = `${eolDates[aniloxHistory.length - 1 + i]} 00:00:00`;
-        last = new Date(last);
-
-        let next = new Date(last.setMonth(last.getMonth() + 6)),
-            year = String(next.getFullYear()),
-            month = String(next.getMonth() + 1),
-            day = String(next.getDate());
-
-        month.length < 2 ? month = `0${month}` : month = month;
-        day.length < 2 ? day = `0${day}` : day = day;
-
-        next = [year, month, day].join('-');
-        eolDates[aniloxHistory.length + i] = next;
-      }
+    let [m, b, estimatedVol, estimatedDates, estimatedPercent] = linearRegression(nomVol, measuredVol, measuredDates);
+    // console.log("m: ", m);
+    // console.log("b: ", b);
+    // console.log("Estimated Vol: ", estimatedVol);
+    // console.log('Estimated Dates: ', estimatedDates);
+    // console.log('Estimated Percent', estimatedPercent);
+    let msg = "";
+    if(estimatedVol === 1000) msg = `El volumen de celda ya se encuentra por debajo del 60% del volumen nominal (${Math.round(((nomVol * 0.6) + Number.EPSILON) * 10) / 10}).`;
+    else if (estimatedVol === 2000) msg = `No se cuenta suficientes datos para realizar una estimación.`;
+    else {
       const dataEOLGraph = {
-        labels: eolDates,
+        labels: estimatedDates,
         datasets: [{
           type: 'line',
           label: `Volumen estimado (BCM)`,
-          data: eolData,
+          data: estimatedVol,
           fill: false,
           borderColor: 'rgba(255, 0, 0, 0.35)',
           tension: 0.1,
@@ -652,7 +743,7 @@ const estimarVida = (e)=>{
         }, {
           type: 'scatter',
           label: `Volumen medido (BCM)`,
-          data: volData,
+          data: measuredVol,
           fill: false,
           borderColor: 'rgba(0, 0, 255, 0.6)',
           datalabels: {
@@ -690,8 +781,8 @@ const estimarVida = (e)=>{
               clip: false,
               formatter: function(value, context){
                 if(context.dataset.type === 'line'){
-                  if((value == percentVol[0] && ((percentDates[0] - aniloxHistory.length) / 2) > 0) || (value == percentVol[1] && ((percentDates[1] - aniloxHistory.length) / 2) > 0) || (value == percentVol[2] && ((percentDates[2] - aniloxHistory.length) / 2) > 0) || (value == percentVol[3] && ((percentDates[3] - aniloxHistory.length) / 2) > 0)) {return value}
-                  else {return ''}
+                  if(estimatedPercent[1].includes(value) && value < measuredVol[measuredVol.length - 1]) return value;
+                  else return '';
                 }
               },
             },
@@ -716,10 +807,10 @@ const estimarVida = (e)=>{
                 },
                 footer: function(tooltipItems){
                   let vol = tooltipItems[0].dataset.data[tooltipItems[0].dataIndex];
-                  if(vol == percentVol[0] && ((percentDates[0] - aniloxHistory.length) / 2) > 0){return `Volumen de celda aprox. 90% del nominal (${Math.round(((aniloxData.nomvol * 0.9) + Number.EPSILON) * 10) / 10})`}
-                  if(vol == percentVol[1] && ((percentDates[1] - aniloxHistory.length) / 2) > 0){return `Volumen de celda aprox. 80% del nominal (${Math.round(((aniloxData.nomvol * 0.8) + Number.EPSILON) * 10) / 10})`}
-                  if(vol == percentVol[2] && ((percentDates[2] - aniloxHistory.length) / 2) > 0){return `Volumen de celda aprox. 70% del nominal (${Math.round(((aniloxData.nomvol * 0.7) + Number.EPSILON) * 10) / 10})`}
-                  if(vol == percentVol[3] && ((percentDates[3] - aniloxHistory.length) / 2) > 0){return `Volumen de celda aprox. 60% del nominal (${Math.round(((aniloxData.nomvol * 0.6) + Number.EPSILON) * 10) / 10})`}
+                  if(vol === estimatedPercent[1][0] && estimatedPercent[0][0] > measuredDates.length - 1) return `Volumen de celda aprox. 90% del nominal (${Math.round(((nomVol * 0.9) + Number.EPSILON) * 10) / 10})`
+                  if(vol === estimatedPercent[1][1] && estimatedPercent[0][1] > measuredDates.length - 1) return `Volumen de celda aprox. 80% del nominal (${Math.round(((nomVol * 0.8) + Number.EPSILON) * 10) / 10})`
+                  if(vol === estimatedPercent[1][2] && estimatedPercent[0][2] > measuredDates.length - 1) return `Volumen de celda aprox. 70% del nominal (${Math.round(((nomVol * 0.7) + Number.EPSILON) * 10) / 10})`
+                  if(vol === estimatedPercent[1][3] && estimatedPercent[0][3] > measuredDates.length - 1) return `Volumen de celda aprox. 60% del nominal (${Math.round(((nomVol * 0.6) + Number.EPSILON) * 10) / 10})`
                 }
               },
             },
@@ -748,22 +839,21 @@ const estimarVida = (e)=>{
           },
         }
       });
-      msg = '';
-      let tableData = Array.from(Array(percentVol.length), ()=>({
+      let tableData = Array.from(Array(estimatedPercent[1].length), ()=>({
         volumePercent: '',
         volumeEstimated: '',
         timeRemainingEstimated: '',
       }));
-      for (i = 0; i < percentVol.length; i++){
-        if(((percentDates[i] - aniloxHistory.length) / 2) <= 0){
+      for (let i = 0; i < estimatedPercent[1].length; i++){
+        if(estimatedPercent[0][i] <= measuredDates.length - 1){
           tableData[i].volumePercent = null;
           tableData[i].volumeEstimated = null;
           tableData[i].timeRemainingEstimated = null;
         }
         else {
           tableData[i].volumePercent = (90 - (i * 10));
-          tableData[i].volumeEstimated = percentVol[i];
-          tableData[i].timeRemainingEstimated = ((percentDates[i] - aniloxHistory.length) / 2);
+          tableData[i].volumeEstimated = estimatedPercent[1][i];
+          tableData[i].timeRemainingEstimated = (estimatedPercent[0][i] - measuredDates.length + 1) / 2;
         }
       }
       tableData.forEach(el=>{
@@ -771,7 +861,6 @@ const estimarVida = (e)=>{
           $template.querySelector(".volume-percent").textContent = `${el.volumePercent}%`;
           $template.querySelector(".volume-estimated").textContent = el.volumeEstimated;
           $template.querySelector(".time-remaining-estimated").textContent = `${el.timeRemainingEstimated} años`;
-
           let $clone = d.importNode($template, true);
           $fragment.appendChild($clone);
         }
@@ -780,8 +869,9 @@ const estimarVida = (e)=>{
       cleanGraph2 = new Chart($cleanGraph2, cleanGraphConfig);
       damagedGraph2 = new Chart($damagedGraph2, damagedGraphConfig);
       wearGraph2 = new Chart($wearGraph2, wearGraphConfig);
+      $eolGraphContainer.style.display = "flex";
+      $tableContainer.style.display = "flex";
     }
-    $modalEOLAnilox.style.display = "block";
     $eolDescription.textContent = msg;
   }
   if(e.target === $closeModalEOLAnilox){

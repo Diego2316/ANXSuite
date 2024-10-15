@@ -6,7 +6,6 @@ const $table = d.querySelector("table"),
 const $clientSelector = d.getElementById("client-selector");
 
 const $modalPdf = d.getElementById("modal-pdf"),
-      $masterPdf = d.getElementById("master-pdf"),
       $closeModalPdf = d.getElementById("close-modal-pdf");
 
 const $modalQuoteBox = d.getElementById("modal-quote-box"),
@@ -37,7 +36,6 @@ const drawTable = (list)=>{
     $template.querySelector(".volume").textContent = el.volume;
     $template.querySelector(".last").textContent = el.last;
     $template.querySelector(".next").textContent = el.next;
-    $template.querySelector(".master").dataset.base64 = el.master;
     $template.querySelector(".quote").dataset.id = el.id;
     $template.querySelector(".delete").dataset.id = el.id;
     if((Date.now() - Date.parse(String(el.next))) >= 0 && (Date.now() - Date.parse(String(el.next))) <= 15778800000){
@@ -73,10 +71,17 @@ const drawTable = (list)=>{
 
 const populateSelector = async(selectedClient)=>{
   try {
-    let res = await fetch("http://anx-suite:3000/clients"),
+    let res = await fetch("/api/clientes", {
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json',
+      }
+    }),
         json = await res.json();
     if(!res.ok) throw{status: res.status, statusText: res.statusText};
-    let clientList = Object.values(json[0]);
+    json = json.result;
+    let clientList = [];
+    json.forEach(el=>clientList.push(el.name));
     for(let i = 0; i < clientList.length; i++){
       let option = d.createElement("option");
        option.value = clientList[i];
@@ -97,10 +102,17 @@ const populateSelector = async(selectedClient)=>{
 const drawAll = async()=>{
   $tableBody.innerHTML = "";
   try {
-    let res = await fetch("http://anx-suite:3000/clients"),
+    let res = await fetch("/api/clientes", {
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json',
+      }
+    }),
         json = await res.json();
     if(!res.ok) throw{status: res.status, statusText: res.statusText};
-    let clientList = Object.values(json[0]);
+    json = json.result;
+    let clientList = [];
+    json.forEach(el=>clientList.push(el.name));
     let aniloxList = [];
     let analysisList = [];
     let completeList = [];
@@ -112,15 +124,21 @@ const drawAll = async()=>{
       purchase: '',
       volume: '',
       last: '',
-      master: '',
       next: '',
       estado: '',
     };
     for(let i = 0; i < clientList.length; i++){
       try {
-        let res = await fetch(`http://anx-suite:3000/${clientList[i]}`),
+        let res = await fetch('/api/super-listado', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({client: clientList[i]}),
+        }),
             json = await res.json();
         if(!res.ok) throw{status: res.status, statusText: res.statusText};
+        json = json.result;
         aniloxList.push(json);
       } catch (err) {
         errorMessage(err);  
@@ -128,9 +146,16 @@ const drawAll = async()=>{
     }
     for(let i = 0; i < clientList.length; i++){
       try {
-        let res = await fetch(`http://anx-suite:3003/${clientList[i]}`),
+        let res = await fetch('/api/super-analysis', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({client: clientList[i], mensaje: "list"}),
+        }),
             json = await res.json();
         if(!res.ok) throw{status: res.status, statusText: res.statusText};
+        json = json.result;
         analysisList.push(json);
       } catch (err) {
         errorMessage(err);
@@ -147,7 +172,6 @@ const drawAll = async()=>{
           newItem.purchase = aniloxList[i][j].purchase;
           newItem.volume = aniloxList[i][j].volume;
           newItem.last = aniloxList[i][j].last;
-          newItem.master = aniloxList[i][j].master;
           newItem.next = analysisList[i][j].next;
           newItem.estado = analysisList[i][j].estado;
           completeList.push(newItem);
@@ -173,22 +197,35 @@ const drawSpecificClient = async(selectedClient)=>{
     purchase: '',
     volume: '',
     last: '',
-    master: '',
     next: '',
     estado: '',
   };
   try {
-    let res = await fetch(`http://anx-suite:3000/${selectedClient}`),
+    let res = await fetch('/api/super-listado', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({client: selectedClient}),
+    }),
         json = await res.json();
     if(!res.ok) throw{status: res.status, statusText: res.statusText};
+    json = json.result;
     aniloxList.push(json);
   } catch (err) {
     errorMessage(err);  
   }
   try {
-    let res = await fetch(`http://anx-suite:3003/${selectedClient}`),
+    let res = await fetch('/api/super-analysis', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({client: selectedClient, mensaje: "list"}),
+    }),
         json = await res.json();
     if(!res.ok) throw{status: res.status, statusText: res.statusText};
+    json = json.result;
     analysisList.push(json);
   } catch (err) {
     errorMessage(err);
@@ -203,7 +240,6 @@ const drawSpecificClient = async(selectedClient)=>{
       newItem.purchase = aniloxList[0][i].purchase;
       newItem.volume = aniloxList[0][i].volume;
       newItem.last = aniloxList[0][i].last;
-      newItem.master = aniloxList[0][i].master;
       newItem.next = analysisList[0][i].next;
       newItem.estado = analysisList[0][i].estado;
       completeList.push(newItem);
@@ -240,12 +276,37 @@ const drawOnChange = async(e)=>{
 const doOnClick = async(e)=>{
   //show master pdf
   if(e.target.matches(".master")){
-    const base64 = e.target.dataset.base64;
-    $masterPdf.setAttribute("data", base64);
-    $modalPdf.style.display = "block";
+    try {
+      let id = e.target.parentElement.parentElement.children[1].textContent;
+      let viewer = d.createElement("object");
+      viewer.setAttribute("type", "application/pdf");
+      viewer.setAttribute("id", "master-pdf");
+      let res = await fetch("/api/super-listado", {
+          method: "POST",
+          headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                id: id,
+                mensaje: "master",
+              })
+            }),
+                json = await res.json();
+      if(!res.ok) throw{status: res.status, statusText: res.statusText};
+      json = json.result[0];
+      const data = b64toBlob(json.master.slice(28));
+      viewer.setAttribute("data", data);
+      $modalPdf.children[0].children[1].appendChild(viewer);
+      $modalPdf.style.display = "block";
+    } catch (err) {
+      errorMessage(err);
+    }
   }
   if(e.target === $closeModalPdf){
     $modalPdf.style.display = "none";
+    while($modalPdf.children[0].children[1].childElementCount > 0){
+      $modalPdf.children[0].children[1].removeChild($modalPdf.children[0].children[1].firstElementChild);
+    }
   }
   //delete anilox
   if(e.target.matches(".delete")){
@@ -257,45 +318,22 @@ const doOnClick = async(e)=>{
   if(e.target === $acceptDelete){
     try {
       $modalDeleteBox.style.display = "none";
-      let options = {
-        method: "DELETE",
+      let res = await fetch('api/borrar-anilox', {
+        method: 'POST',
         headers: {
-          "Content-type": "application/json; charset=UTF-8"
+            'Content-Type': 'application/json',
         },
-      };
-      try {
-        let res = await fetch(`http://anx-suite:3002/${deleteClient}/${deleteId}`, options);
-        if(!res.ok) throw{status: res.status, statusText: res.statusText};
-      } catch (err) {
-        errorMessage(err);
-      }
-      try {
-        let res = await fetch(`http://anx-suite:3000/${deleteClient}/${deleteId}`, options);
-        if(!res.ok) throw{status: res.status, statusText: res.statusText};
-      } catch (err) {
-        errorMessage(err);
-      }
-      try {
-        let res = await fetch(`http://anx-suite:3003/${deleteClient}/${deleteId}`, options);
-        if(!res.ok) throw{status: res.status, statusText: res.statusText};
-      } catch (err) {
-        errorMessage(err);
-      }
-      let res = await fetch(`http://anx-suite:3000/${deleteClient}/${deleteId}`);
-      deleteId = undefined;
-      if(res.ok){
-        $alertContent.textContent = `Ocurrio un problema al eliminar el rodillo.`;
-        $modalAlertBox.style.display = "block";
-      }
+        body: JSON.stringify({deleteID: deleteId})
+      });
       if(!res.ok) throw{status: res.status, statusText: res.statusText};
+      deleteId = undefined;
+      $alertContent.textContent = `Rodillo eliminado exitosamente. Se refrescará automáticamente el portal en 5 segundos para mostrar los cambios.`;
+      $modalAlertBox.style.display = "block";
+      setTimeout(()=>{
+        location.reload();
+      }, 5000);
     } catch (err) {
-      if(err.status === 404){
-        $alertContent.textContent = `Rodillo eliminado exitosamente. Se refrescará automáticamente el portal en 5 segundos para mostrar los cambios.`;
-        $modalAlertBox.style.display = "block";
-        setTimeout(()=>{
-          location.reload();
-        }, 5000);
-      }
+      errorMessage(err);
     }
   }
   if(e.target === $closeDeleteBox){
@@ -306,10 +344,16 @@ const doOnClick = async(e)=>{
   if(e.target.matches(".quote")){
     try {
       quoteId = e.target.dataset.id;
-      quoteClient = e.target.parentElement.parentElement.children[0].textContent.toLowerCase();
-      let res = await fetch(`http://anx-suite:3000/${quoteClient}/${quoteId}`),
+      let res = await fetch('/api/listado', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({id: quoteId, mensaje: "quote"})
+      }),
           json = await res.json();
       if(!res.ok) throw{status: res.status, statusText: res.statusText};
+      json = json.result[0];
       quoteType = json.type;
       quoteNomVol = json.nomvol;
       quoteScreen = json.screen;
@@ -342,11 +386,13 @@ const doOnClick = async(e)=>{
           nomvol: quoteNomVol,
           screen: quoteScreen,
           angle: quoteAngle,
-          client: quoteClient,
+          volUnit: "BCM",
+          screenUnit: "LPI",
           reqDate: (new Date(Date.now()).toJSON()).slice(0,10),
+          mensaje: "send quote"
         }),
       },
-          res = await fetch("http://anx-suite:3004/single", options);
+          res = await fetch('api/request-quotes', options);
           if(res.ok){
             $modalQuoteBox.style.display = "none";
             quoteId = undefined;
@@ -387,7 +433,7 @@ const doOnClick = async(e)=>{
     ss.setItem("aniloxId", loadId);
     ss.setItem("aniloxBrand", loadBrand);
     ss.setItem("aniloxClient", loadClient);
-    window.location.href = 'anilox-detail.html';
+    window.location.href = 'super_anilox-detail.html';
   }
 }
 

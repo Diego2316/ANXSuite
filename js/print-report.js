@@ -9,8 +9,6 @@ const $aniloxTable = d.querySelector(".anilox-table"),
       $pdf = d.querySelector(".pdf"),
       $reportTableBody = d.querySelector(".report-table-body"),
       $reportTitle = d.getElementById("report-title"),
-      $reportPdf = d.getElementById("report-pdf"),
-      $descargaPdf = d.getElementById("descarga-pdf"),
       $searchReportBtn = d.getElementById("search-report-btn"),
       $closeSearchReport = d.getElementById("close-search-report-anilox"),
       $modalSearchReport = d.getElementById("modal-search-report-anilox"),
@@ -92,14 +90,19 @@ const getReportList = async(e)=>{
 
 const getReport = async(e)=>{
   if(e.target.matches(".date")){
+    for(let i = 0; i < e.target.parentElement.parentElement.children.length; i++){
+      e.target.parentElement.parentElement.children[i].children[0].classList.remove("selected");
+    }
+    e.target.classList.add("selected");
+    while($pdf.childElementCount > 1){
+      $pdf.removeChild($pdf.lastElementChild);
+    }
+    aniloxReportDate = e.target.textContent;
     try {
-      for(let i = 0; i < e.target.parentElement.parentElement.children.length; i++){
-        e.target.parentElement.parentElement.children[i].children[0].classList.remove("selected");
-      }
-      e.target.classList.add("selected");
-      $pdf.style.display = "flex";
-      aniloxReportDate = e.target.textContent;
-      $reportTitle.textContent = `${aniloxReportId}_${aniloxReportDate}`
+      $reportTitle.textContent = `${aniloxReportId}_${aniloxReportDate}`;
+      let viewer = d.createElement("object");
+      viewer.setAttribute("type", "application/pdf");
+      viewer.setAttribute("id", "report-pdf");
       let res = await fetch('/api/anilox-history', {
         method: 'POST',
         headers: {
@@ -108,27 +111,24 @@ const getReport = async(e)=>{
         body: JSON.stringify({ aniloxReportId: aniloxReportId })
       }),
           json = await res.json();
-          json = json.result;
-
       if(!res.ok) throw{status: res.status, statusText: res.statusText};
-
-      let reportURL;
-
-      json.forEach(el =>{
+      json = json.result;
+      json.forEach(el => {
         if(el.date === aniloxReportDate){
-          reportURL = el.report;
+          const data = b64toBlob(el.report.slice(28));
+          viewer.setAttribute("data", data);
+          $pdf.appendChild(viewer);
+          $pdf.style.display = "flex";
         }
       });
-
-      $reportPdf.setAttribute("data", reportURL);
-      $descargaPdf.setAttribute("href", reportURL);
     } catch (err) {
       console.log(err);
       let errorCode = err.status || "2316",
           errorStatus = err.statusText || "No se pudo establecer contacto con el servidor",
-         message1 = "Error " + errorCode + ": ",
+         message1 = "Error " + errorCode,
          message2 = errorStatus;
-      $reportPdf.insertAdjacentHTML("afterend", `<p><b>${message1}</b>${message2}</p>`);
+      $alertContent.textContent = `${message1}: ${message2}`;
+      $modalAlertBox.style.display = "block";
     }
   }
 }

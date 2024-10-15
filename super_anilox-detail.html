@@ -11,13 +11,13 @@
     <!-- Favicon -->
     <link rel="icon" href="./assets/favicon.ico" type="image/x-icon">
     <!-- Manifest -->
-    <link rel="manifest" href="./manifest.json">
+    <link rel="manifest" crossorigin="use-credentials" href="./manifest.json">
     <!-- Material Icons CDN -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Sharp" rel="stylesheet">
     <!-- Main Stylesheet -->
-    <link rel="stylesheet" href="./css/style.css">
+    <link rel="stylesheet" href="./super_css/super_style.css">
     <!-- Anilox-Detail Stylesheet -->
-    <link rel="stylesheet" href="./css/anilox-detail.css">
+    <link rel="stylesheet" href="./super_css/super_anilox-detail.css">
     <!-- Chart JS -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
@@ -46,7 +46,6 @@
           </button>
           <div class="dropdown-content" id="drop-opciones">
             <a id="estimar-vida">Estimar vida restante</a>
-            <a href="export-data.html">Exportar datos</a>
             <a href="req-quotes.html">Solicitar cotización</a>
           </div>
         </div>
@@ -57,6 +56,9 @@
           <img src="./assets/logo.png">
         </div>
         <div class="title">
+          <span class="material-icons-sharp" title="Código de ánilox">
+            hive
+          </span>
           <h1 id="anilox-id"></h1>
           <div class="list-controls">
             <div class="control">
@@ -85,29 +87,24 @@
                 dashboard
               </span>
             </a>
-            <a id="search-anilox" class="active">
-              <span class="material-icons-sharp" title="Buscar Ánilox">
-                manage_search
-              </span>
-            </a>
             <a href="super_listado.html" id="listado">
               <span class="material-icons-sharp" title="Listado de Ánilox">
                 format_list_numbered
               </span>
             </a>
-            <a href="super_print-report.html">
-              <span class="material-icons-sharp" title="Imprimir Reportes">
-                print
-              </span>
-            </a>
-            <a href="super_export-data.html">
-              <span class="material-icons-sharp" title="Exportar Datos">
-                file_download
+            <a id="search-anilox" class="active">
+              <span class="material-icons-sharp" title="Buscar Ánilox">
+                manage_search
               </span>
             </a>
             <a href="super_req-quotes.html">
               <span class="material-icons-sharp" title="Solicitar Cotización">
                 request_quote
+              </span>
+            </a>
+            <a href="super_print-report.html">
+              <span class="material-icons-sharp" title="Imprimir Reportes">
+                print
               </span>
             </a>
             <a href="#" id="log-out">
@@ -122,37 +119,39 @@
           <div class="detail-content">
             <div class="data-top">
               <div class="data">
-                <span>
-                  <h3>Fabricante:</h3>
-                  <p id="data-brand"></p>
-                </span>
-                <span>
-                  <h3>Tipo:</h3>
-                  <p id="data-type"></p>
-                </span>
-                <span>
-                  <h3>Fecha de compra:</h3>
-                  <p id="data-purchase"></p>
-                </span>
-                <span>
-                  <h3>Volumen de celda (BCM):</h3>
-                  <p id="data-volume"></p>
-                </span>
-                <span>
-                  <h3>Lineatura (LPI):</h3>
-                  <p id="data-screen"></p>
-                </span>
-                <span>
-                  <h3>Última fecha de revisión:</h3>
-                  <p id="data-last"></p>
-                </span>
-                <span>
-                  <h3>Próxima fecha de revisión:</h3>
-                  <p id="data-next"></p>
-                </span>
-                <span class="material-icons-sharp" title="Ver más" id="ver-mas">
-                  read_more
-                </span>
+                <div class="span-container">
+                  <span>
+                    <h3>Fabricante:</h3>
+                    <p id="data-brand"></p>
+                  </span>
+                  <span>
+                    <h3>Tipo:</h3>
+                    <p id="data-type"></p>
+                  </span>
+                  <span>
+                    <h3>Fecha de compra:</h3>
+                    <p id="data-purchase"></p>
+                  </span>
+                  <span>
+                    <h3>Volumen de celda (BCM):</h3>
+                    <p id="data-volume"></p>
+                  </span>
+                  <span>
+                    <h3>Lineatura (LPI):</h3>
+                    <p id="data-screen"></p>
+                  </span>
+                  <span>
+                    <h3>Última fecha de revisión:</h3>
+                    <p id="data-last"></p>
+                  </span>
+                  <span>
+                    <h3>Próxima fecha de revisión:</h3>
+                    <p id="data-next"></p>
+                  </span>
+                  <span class="material-icons-sharp" title="Ver más" id="ver-mas">
+                    read_more
+                  </span>
+                </div>
               </div>
               <!-- Final Data -->
               <div class="clean-graph">

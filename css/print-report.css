@@ -99,7 +99,7 @@
 
 .right-content > div object{
   width: 100%;
-  height: 84vh;
+  height: 83vh;
   box-shadow: var(--box-shadow);
   transition: all 300ms ease;
 }

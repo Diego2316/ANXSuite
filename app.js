@@ -4,7 +4,7 @@ module.exports = { path }; // Exportar la variable path para poder usarla en otr
 
 const express = require("express"); // Ncesario para poder crear la aplicación Express
 const { login, registro, registro_licencia, password_recovery, soloAdmin, soloPublico, soloSuperAdmin, tablaAniloxAnalysis, tablaAniloxList, cotizaciones,
-  usuarioNivelCliente, tablaClientes, tablaLicencias, tablaAniloxHistory, borrarAnilox, generarPdf } = require("./controllers/autenticacion");
+  usuarioNivelCliente, tablaClientes, tablaLicencias, tablaAniloxHistory, borrarAnilox, generarPdf, superAnalysis, superListado, superHistory } = require("./controllers/autenticacion");
 
 const app = express();
 const port = 3000;
@@ -189,8 +189,10 @@ app.post('/api/clientes', tablaClientes);
 app.post('/api/licencias', tablaLicencias);
 app.post('/api/pdf', generarPdf); // fetch('/api/pdf') redirige a la función generarPdf de autenticacion.js
 app.post('/api/recover', password_recovery); // fetch('/api/recover') redirige a la función password_recovery de autenticacion.js
+app.post('/api/super-analysis', superAnalysis);
+app.post('/api/super-listado', superListado);
+app.post('/api/super-history', superHistory);
 
 app.listen(port, () => {  // Iniciar el servidor en el puerto 3000
   console.log(`Server listening at port: ${port}`); 
 });
-

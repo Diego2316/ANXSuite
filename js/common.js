@@ -14,7 +14,15 @@ const $volumeText = d.querySelectorAll(".volumeUnit"),
       $screenText = d.querySelectorAll(".screenUnit"),
       $volumeTitle = d.querySelectorAll(".volumeTitle");
 
+
 let volMulti, screenMulti;
+
+// Service Worker
+
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('./sw.js')
+  .catch(err => console.warn(err));
+}
 
 d.addEventListener("DOMContentLoaded",()=>{
   if(ls.getItem("volumeUnit") === null){
@@ -121,13 +129,6 @@ d.addEventListener("click", (e)=>{
     location.reload(true);
   }
 });
-
-// Service Worker
-
-// if('serviceWorker' in navigator){
-//   navigator.serviceWorker.register('./sw.js')
-//   .catch(err => console.warn(err));
-// }
 
 // Dropdown
 
@@ -356,6 +357,25 @@ const closeAlertBox = (e)=>{
 }
 
 d.addEventListener("click", closeAlertBox);
+
+// Base 64 to Blob
+
+const b64toBlob = (b64Data, contentType='application/pdf', sliceSize=512) => {
+  const byteCharacters = atob(b64Data);
+  const byteArrays = [];
+  for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+    const slice = byteCharacters.slice(offset, offset + sliceSize);
+    const byteNumbers = new Array(slice.length);
+    for (let i = 0; i < slice.length; i++) {
+      byteNumbers[i] = slice.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    byteArrays.push(byteArray);
+  }
+  const blob = new Blob(byteArrays, {type: contentType});
+  const blobUrl = URL.createObjectURL(blob);
+  return blobUrl;
+}
 
 // License remaining days
 

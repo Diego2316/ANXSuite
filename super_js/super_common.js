@@ -22,22 +22,26 @@ const $user = d.getElementById("user-name"),
 
 d.addEventListener("DOMContentLoaded",async()=>{
   try {
-    if(ss.getItem("user") === null){
-      let res = await fetch("api/"),
-          json = await res.json();
-      if(!res.ok) throw{status: res.status, statusText: res.statusText};
-      ss.setItem("user",json[0].user);
-      ss.setItem("level",json[0].level);
-    }
+    let res = await fetch("/api/usuarioNivelCliente", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    }),
+        json = await res.json();
+    if(!res.ok) throw{status: res.status, statusText: res.statusText};
+    ss.setItem("user",json.user);
+    ss.setItem("level",json.level);
+    ss.setItem("client", json.client);
     $user.textContent = ss.getItem("user");
-  } catch (err) {
+   } catch (err) {
     console.log(err);
     let errorCode = err.status || "2316",
-        errorStatus = err.statusText || "No se pudo establecer contacto con el servidor",
-        message1 = "Error " + errorCode + ": ",
-        message2 = errorStatus;
-    $level.insertAdjacentHTML("afterend", `<p><b>${message1}</b>${message2}</p>`);
-  }
+          errorStatus = err.statusText || "No se pudo establecer contacto con el servidor",
+          message1 = "Error " + errorCode + ": ",
+          message2 = errorStatus;
+      $level.insertAdjacentHTML("afterend", `<p><b>${message1}</b>${message2}</p>`);
+   }
 })
 
 // Dropdown
@@ -138,10 +142,9 @@ d.addEventListener("click", (e)=>{
 //Error Message
 
 const errorMessage = (error)=>{
-  console.log(error);
   let errorCode = error.status || "2316",
       errorStatus = error.statusText || "No se pudo establecer contacto con el servidor",
-      message1 = "Error " + errorCode + ": ",
+      message1 = "Error " + errorCode,
       message2 = errorStatus;
   $alertContent.textContent = `${message1}: ${message2}`;
   $modalAlertBox.style.display = "block";
@@ -156,13 +159,19 @@ d.addEventListener("submit",async(e)=>{
   if(e.target === $formSearch){
     e.preventDefault();
     let searchId = $searchId.value.toUpperCase();
-    let clientsList, aniloxClient, aniloxBrand;
+    let clientsList = [], aniloxClient, aniloxBrand;
     let foundFlag;
     try {
-      let res = await fetch(`http://anx-suite:3000/clients`),
+      let res = await fetch("/api/clientes", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+      }),
           json = await res.json();
       if(!res.ok) throw{status: res.status, statusText: res.statusText};
-      clientsList = Object.values(json[0]);
+      json = json.result;
+      json.forEach(el=>clientsList.push(el.name));
     } catch (err) {
       console.log(err);
       let errorCode = err.status || "2316",
@@ -176,14 +185,21 @@ d.addEventListener("submit",async(e)=>{
     }
     for(let i = 0; i < clientsList.length; i++){
       try {
-        let res = await fetch(`http://anx-suite:3000/${clientsList[i]}`),
+        let res = await fetch("/api/super-listado", {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({client: clientsList[i], mensaje: "client"})
+        }),
             json = await res.json();
         if(!res.ok) throw{status: res.status, statusText: res.statusText};
+        json = json.result;
         json.forEach(el => {
           if(el.id === searchId){
             foundFlag = 1;
             aniloxBrand = el.brand;
-            aniloxClient = clientsList[i].toUpperCase();
+            aniloxClient = el.empresa;
           }
         });
       } catch (err) {
@@ -201,8 +217,8 @@ d.addEventListener("submit",async(e)=>{
     if(foundFlag === 1){
       ss.setItem("aniloxId", searchId);
       ss.setItem("aniloxBrand", aniloxBrand);
-      ss.setItem("aniloxClient", aniloxClient);
-      window.location.href = 'anilox-detail.html';
+      ss.setItem("aniloxClient", aniloxClient.toUpperCase());
+      window.location.href = 'super_anilox-detail.html';
     }
     if(foundFlag !== 1){
       $alertContent.textContent = `No se encontro ánilox con el código ingresado en su base de datos.`;
@@ -211,3 +227,22 @@ d.addEventListener("submit",async(e)=>{
     $searchId.value = "";
   }
 });
+
+// Base 64 to Blob
+
+const b64toBlob = (b64Data, contentType='application/pdf', sliceSize=512) => {
+  const byteCharacters = atob(b64Data);
+  const byteArrays = [];
+  for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+    const slice = byteCharacters.slice(offset, offset + sliceSize);
+    const byteNumbers = new Array(slice.length);
+    for (let i = 0; i < slice.length; i++) {
+      byteNumbers[i] = slice.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    byteArrays.push(byteArray);
+  }
+  const blob = new Blob(byteArrays, {type: contentType});
+  const blobUrl = URL.createObjectURL(blob);
+  return blobUrl;
+}

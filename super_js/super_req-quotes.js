@@ -27,11 +27,18 @@ let selectedClient;
 
 const getClientsList = async()=>{
   try {
-    let res = await fetch("http://anx-suite:3000/clients"),
+    let res = await fetch("/api/clientes", {
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json',
+      }
+    }),
         json = await res.json();
     if(!res.ok) throw{status: res.status, statusText: res.statusText};
-    let clienList = Object.values(json[0]);
-    clienList.forEach(el => {
+    json = json.result;
+    let clientList = [];
+    json.forEach(el=>clientList.push(el.name));
+    clientList.forEach(el => {
       $clientsListTemplate.querySelector(".client").textContent = el.toUpperCase();
       let $clone = d.importNode($clientsListTemplate, true);
       $clientsListFragment.appendChild($clone);
@@ -61,9 +68,16 @@ const getAniloxList = async(e)=>{
     }
     e.target.classList.add("selected");
     try {
-      let res = await fetch(`http://anx-suite:3000/${selectedClient}`),
+      let res = await fetch('/api/super-listado', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({client: selectedClient, mensaje: "client"}),
+      }),
           json = await res.json();
       if(!res.ok) throw{status: res.status, statusText: res.statusText};
+      json = json.result;
       json.forEach(el => {
         $aniloxListTemplate.querySelector(".id").textContent = el.id;
         let $clone = d.importNode($aniloxListTemplate, true);
@@ -82,16 +96,23 @@ const getAniloxList = async(e)=>{
 
 const getAniloxData = async(e)=>{
   if(e.target.matches(".id")){
+    selectedId = e.target.textContent.toUpperCase();
+    $aniloxQuantity.value = "";
+    for(let i = 0; i < e.target.parentElement.parentElement.children.length; i++){
+      e.target.parentElement.parentElement.children[i].children[0].classList.remove("selected");
+    }
+    e.target.classList.add("selected");
     try {
-      for(let i = 0; i < e.target.parentElement.parentElement.children.length; i++){
-        e.target.parentElement.parentElement.children[i].children[0].classList.remove("selected");
-      }
-      e.target.classList.add("selected");
-      $aniloxQuantity.value = "";
-      let aniloxId = e.target.textContent;
-      let res = await fetch(`http://anx-suite:3000/${selectedClient}/${aniloxId}`),
+      let res = await fetch('/api/super-listado', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({client: selectedClient, mensaje: "quote", id: selectedId}),
+      }),
           json = await res.json();
       if(!res.ok) throw{status: res.status, statusText: res.statusText};
+      json = json.result[0];
       $specificType.textContent = json.type;
       $specificAngle.textContent = json.angle;
       $specificVol.textContent = json.nomvol;
@@ -143,9 +164,11 @@ const removeFromQuote = (e)=>{
 const requestQuote = async(e)=>{
   if(e.target === $requestQuote){
     let cantItems = $quoteBody.childElementCount;
+    let mensaje;
     if(cantItems > 0){
       try {
         let req = [];
+        if(cantItems === 1) mensaje = "send quote";
         for(let i = 0; i < cantItems; i++){
           let item = $quoteBody.children[i];
           let type = item.querySelector(".specific-item-type").textContent,
@@ -153,18 +176,29 @@ const requestQuote = async(e)=>{
               screen = item.querySelector(".specific-item-screen").textContent,
               angle = item.querySelector(".specific-item-angle").textContent,
               amount = item.querySelector(".specific-item-quantity").textContent;
-          req[i] = `"${i + 1}": {"type": "${type}", "nomvol": "${nomvol}", "screen": "${screen}", "angle": "${angle}", "amount": "${amount}"}`
+          req.push({
+            id: i+1,
+            type: type,
+            nomvol: nomvol,
+            screen: screen,
+            angle: angle,
+            amount: amount,
+            mensaje: mensaje
+          });
         }
-        req = req.join();
-        let body = `{"client": "${selectedClient}", "reqDate": "${(new Date(Date.now()).toJSON()).slice(0,10)}", "req": {${req}}}`;
         let options = {
           method: "POST",
           headers: {
-            "Content-type": "application/json; charset=UTF-8",
+            "Content-type": "application/json",
           },
-          body: body,
+          body: JSON.stringify({
+            reqDate: (new Date(Date.now()).toJSON()).slice(0, 10),
+            req2: req,
+            volUnit: "BCM",
+            screenUnit: "LPI"
+          }),
         },
-            res = await fetch("http://anx-suite:3004/grouped", options);
+            res = await fetch('/api/request-quotes', options);
         if(res.ok) {
           $alertContent.textContent = "Solicitud registrada exitosamente.";
           $modalAlertBox.style.display = "block";

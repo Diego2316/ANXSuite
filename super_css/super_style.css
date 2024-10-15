@@ -271,7 +271,6 @@ b{
   color: var(--color-white);
   border-top-left-radius: 1.8rem;
   border-top-right-radius: 1.8rem;
-  
 }
 
 .modal .modal-header h2{
@@ -283,7 +282,7 @@ b{
   padding: 0.5rem;
   display: flex;
   flex-direction: column;
-  margin-left: 1rem;
+  margin-left: 0 1rem;
 }
 
 .modal .modal-body h3{
@@ -404,7 +403,7 @@ b{
 }
 
 .top-bar .user{
-  flex: 0 0 10rem;
+  flex: 0 0 15rem;
   display: flex;
   flex-direction: column;
   justify-self: right;

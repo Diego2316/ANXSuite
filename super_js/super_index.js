@@ -34,7 +34,7 @@ const $template = d.getElementById("table-template").content,
 const $arrowLeft = d.getElementById("arrow-left"),
       $arrowRight = d.getElementById("arrow-right");
 
-let clientList, numPages;
+let clientList = [], numPages;
 let currentPage = 1;
 let clientsPerPage = [];
 
@@ -107,26 +107,29 @@ const initialDraw = async()=>{
     }),
         json = await res.json();
     if(!res.ok) throw{status: res.status, statusText: res.statusText};
-    clientList = Object.values(json.result[0]);
+    json = json.result;
+    json.forEach(el=>clientList.push(el.name));
     numPages = Math.floor(clientList.length/4)+1;
-    for(let i = 0; i < numPages - 1; i++){
-      clientsPerPage[i] = 4
-    }
+    for(let i = 0; i < numPages - 1; i++) clientsPerPage[i] = 4;
     clientsPerPage.push(clientList.length%4);
     $arrowLeft.style.cursor = "not-allowed";
-    if(numPages <= 1){
-      $arrowRight.style.cursor = "not-allowed";
-      }
+    if(numPages <= 1) $arrowRight.style.cursor = "not-allowed";
   } catch (err) {
     errorMessage(err);
   }
   for(let i = 0; i < clientsPerPage[currentPage-1]; i++){
     drawTableContainer(i, currentPage);
     try {
-      let res = await fetch(`http://anx-suite:3003/${clientList[((currentPage-1)*4)+i]}`),
-      // let res = await fetch(`http://anx-suite:3003/${clientList[((currentPage-1)*4)+i]}`),
+      let res = await fetch("/api/super-analysis", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({client: `${clientList[((currentPage-1)*4)+i]}`, mensaje: "list"})
+      }),
           json = await res.json();
       if(!res.ok) throw{status: res.status, statusText: res.statusText};
+      json = json.result;
       drawTable(i, json);
     } catch (err) {
       errorMessage(err);
@@ -145,9 +148,16 @@ const changePage = async(e)=>{
       for(let i = 0; i < clientsPerPage[currentPage-1]; i++){
         drawTableContainer(i, currentPage);
         try {
-          let res = await fetch(`http://anx-suite:3003/${clientList[((currentPage-1)*4)+i]}`),
+          let res = await fetch("/api/super-analysis", {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({client: `${clientList[((currentPage-1)*4)+i]}`, mensaje: "list"})
+          }),
               json = await res.json();
           if(!res.ok) throw{status: res.status, statusText: res.statusText};
+          json = json.result;
           drawTable(i, json);
         } catch (err) {
           errorMessage(err);
@@ -168,9 +178,16 @@ const changePage = async(e)=>{
       for(let i = 0; i < clientsPerPage[currentPage-1]; i++){
         drawTableContainer(i, currentPage);
         try {
-          let res = await fetch(`http://anx-suite:3003/${clientList[((currentPage-1)*4)+i]}`),
+          let res = await fetch("/api/super-analysis", {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({client: `${clientList[((currentPage-1)*4)+i]}`, mensaje: "list"})
+          }),
               json = await res.json();
           if(!res.ok) throw{status: res.status, statusText: res.statusText};
+          json = json.result;
           drawTable(i, json);
         } catch (err) {
           errorMessage(err);

@@ -303,7 +303,13 @@ const levelCheck = ()=>{
   }
 }
 
+const warnings = ()=>{
+  $alertContent.innerText = ` - Valores de lineatura deben ser ingresados en LPI.\n - Valores de volumen de celda deben ser ingresados en BCM.\n - Imagen de inspección debe ser ingresada a color.`;
+  $modalAlertBox.style.display = "block";
+}
+
 d.addEventListener("DOMContentLoaded",levelCheck);
+d.addEventListener("DOMContentLoaded", warnings);
 d.addEventListener("change", uploadImage);
 d.addEventListener("change", uploadCSV);
 d.addEventListener("change", uploadPdf);

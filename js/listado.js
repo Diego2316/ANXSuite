@@ -3,7 +3,6 @@ const $table = d.querySelector(".anilox-table"),
       $fragment = d.createDocumentFragment();
 
 const $modalPdf = d.getElementById("modal-pdf"),
-      $masterPdf = d.getElementById("master-pdf"),
       $closeModalPdf = d.getElementById("close-modal-pdf");
 
 const $modalQuoteBox = d.getElementById("modal-quote-box"),
@@ -56,7 +55,6 @@ const getAll = async ()=>{
       purchase: '',
       volume: '',
       last: '',
-      master: '',
       next: '',
       estado: '',
     }));
@@ -68,7 +66,6 @@ const getAll = async ()=>{
       tableData[i].purchase = data[0].purchase;
       tableData[i].volume = Math.round(((data[0].volume*volMulti)+Number.EPSILON)*10)/10;
       tableData[i].last = data[0].last;
-      tableData[i].master = data[0].master;
       tableData[i].next = json2.result[i].next;
       tableData[i].estado = json2.result[i].estado;
     }
@@ -81,7 +78,6 @@ const getAll = async ()=>{
       $template.querySelector(".volume").textContent = el.volume;
       $template.querySelector(".last-date").textContent = el.last;
       $template.querySelector(".next-date").textContent = el.next;
-      $template.querySelector(".master").dataset.base64 = el.master;
       $template.querySelector(".quote").dataset.id = el.id;
       $template.querySelector(".delete").dataset.id = el.id;
       
@@ -137,33 +133,45 @@ const load = e=>{
   }
 }
 
-const b64toBlob = (b64Data, contentType='application/pdf', sliceSize=512) => {
-  const byteCharacters = atob(b64Data);
-  const byteArrays = [];
-  for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
-    const slice = byteCharacters.slice(offset, offset + sliceSize);
-    const byteNumbers = new Array(slice.length);
-    for (let i = 0; i < slice.length; i++) {
-      byteNumbers[i] = slice.charCodeAt(i);
-    }
-    const byteArray = new Uint8Array(byteNumbers);
-    byteArrays.push(byteArray);
-  }
-  const blob = new Blob(byteArrays, {type: contentType});
-  const blobUrl = URL.createObjectURL(blob);
-  return blobUrl;
-}
-
-const showModalPdf = e=>{
+const showModalPdf = async(e)=>{
   if(e.target.matches(".master")){
-    const data = b64toBlob(e.target.dataset.base64.slice(28));
-    //const data = e.target.dataset.base64;
-    $masterPdf.setAttribute("data", data);
-    $modalPdf.style.display = "block";
+    try {
+      let id = e.target.parentElement.parentElement.children[0].textContent;
+      let viewer = d.createElement("object");
+      viewer.setAttribute("type", "application/pdf");
+      viewer.setAttribute("id", "master-pdf");
+      let res = await fetch("/api/listado", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: id,
+          mensaje: "master",
+        })
+      }),
+          json = await res.json();
+      if(!res.ok) throw{status: res.status, statusText: res.statusText};
+      json = json.result[0];
+      const data = b64toBlob(json.master.slice(28));
+      viewer.setAttribute("data", data);
+      $modalPdf.children[0].children[1].appendChild(viewer);
+      $modalPdf.style.display = "block";
+    } catch (err) {
+      console.log(err);
+      let errorCode = err.status || "2316",
+          errorStatus = err.statusText || "No se pudo establecer contacto con el servidor",
+          message1 = "Error " + errorCode + ": ",
+          message2 = errorStatus;
+      $alertContent.textContent = `${message1}: ${message2}`;
+      $modalAlertBox.style.display = "block";
+    }
   }
   if(e.target === $closeModalPdf){
     $modalPdf.style.display = "none";
-    $masterPdf.setAttribute("data","");
+    while($modalPdf.children[0].children[1].childElementCount > 0){
+      $modalPdf.children[0].children[1].removeChild($modalPdf.children[0].children[1].firstElementChild);
+    }
   }
 }
 

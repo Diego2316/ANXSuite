@@ -27,7 +27,7 @@ table thead, th, tbody, tr, td{
 }
 
 table tbody{
-  height: 73vh;
+  height: 71vh;
   overflow-y: auto;
 }
 

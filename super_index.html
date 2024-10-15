@@ -11,13 +11,13 @@
     <!-- Favicon -->
     <link rel="icon" href="./assets/favicon.ico" type="image/x-icon">
     <!-- Manifest -->
-    <link rel="manifest" href="./manifest.json">
+    <link rel="manifest" crossorigin="use-credentials" href="./manifest.json">
     <!-- Material Icons CDN -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Sharp" rel="stylesheet">
     <!-- Main Stylesheet -->
     <link rel="stylesheet" href="./super_css/super_style.css">
     <!-- Index Stylesheet -->
-    <link rel="stylesheet" href="./super_css/super_anilox-detail.css">
+    <link rel="stylesheet" href="./super_css/super_index.css">
   </head>
   <body>
     <div class="container">
@@ -42,7 +42,6 @@
           <button class="dropbtn">Opciones
           </button>
           <div class="dropdown-content" id="drop-opciones">
-            <a href="super_export-data.html">Exportar datos</a>
             <a href="super_req-quotes.html">Solicitar cotización</a>
           </div>
         </div>
@@ -69,29 +68,24 @@
                 dashboard
               </span>
             </a>
-            <a id="search-anilox">
-              <span class="material-icons-sharp" title="Buscar Ánilox">
-                manage_search
-              </span>
-            </a>
             <a href="super_listado.html" id="listado">
               <span class="material-icons-sharp" title="Listado de Ánilox">
                 format_list_numbered
               </span>
             </a>
-            <a href="super_print-report.html">
-              <span class="material-icons-sharp" title="Imprimir Reportes">
-                print
-              </span>
-            </a>
-            <a href="super_export-data.html">
-              <span class="material-icons-sharp" title="Exportar Datos">
-                file_download
+            <a id="search-anilox">
+              <span class="material-icons-sharp" title="Buscar Ánilox">
+                manage_search
               </span>
             </a>
             <a href="super_req-quotes.html">
               <span class="material-icons-sharp" title="Solicitar Cotización">
                 request_quote
+              </span>
+            </a>
+            <a href="super_print-report.html">
+              <span class="material-icons-sharp" title="Imprimir Reportes">
+                print
               </span>
             </a>
             <a href="#" id="log-out">
