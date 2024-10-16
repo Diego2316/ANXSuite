@@ -30,20 +30,19 @@
             <div style="text-align: left; font-family: 'Magistral'; font-size: 18px;">
                 <label for="username"><b>Usuario</b></label><br>
             </div>
-            <input type="text" placeholder="Ingrese su nombre de usuario" id="username" name="username" required><br>
+            <input type="text" placeholder="Ingrese su nombre de usuario" id="username" name="username" autocomplete="username" required><br>
 
             <div style="text-align: left; font-family: 'Magistral'; font-size: 18px;">
                 <label for="password"><b>Contraseña:</b></label><br>
             </div>
-            <input type="password" placeholder="Ingrese su contraseña" id="password" name="password" required><br>
-
+            <input type="password" placeholder="Ingrese su contraseña" id="password" name="password" autocomplete="current-password" required><br>
             <input type="submit" value="Iniciar Sesión">
             <p class="error escondido">Error al iniciar sesión...</p>
             <div style="display: flex; padding-top: 4px; margin-bottom: -7px">
             </div>
             <div style="text-align: center;">
                 <span class="psw"><strong>Olvidé mi </strong><a href="rcvpass.html">contraseña</a></label><br>
-                <label><strong>¿No tienes una cuenta? </strong></label><span><a href="registro.html">Regístrate</a></span>                                
+                <strong>¿No tienes una cuenta? </strong><span><a href="registro.html">Regístrate</a></span>                                
             </div>
         </div>
     </form>

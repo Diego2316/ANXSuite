@@ -25,32 +25,27 @@
       <div style="text-align: left;">
         <label for="username"><b>Usuario</b></label><br>
       </div>      
-      <input type="text" placeholder="Ingrese un nombre de usuario" id="username" name="username"><br>
-      
+      <input type="text" placeholder="Ingrese un nombre de usuario" id="username" name="username" autocomplete="username"><br>
       <div style="text-align: left;">
         <label for="email"><b>Correo electrónico</b></label><br>
       </div>
-      <input type="email" placeholder="Ingrese su correo electrónico" id="email" name="email" required><br>
-      
+      <input type="email" placeholder="Ingrese su correo electrónico" id="email" name="email" autocomplete="email" required><br>
       <div style="text-align: left;">
         <label for="password"><b>Contraseña:</b></label><br>
       </div>      
-      <input type="password" placeholder="Ingrese una contraseña" id="password" name="password" required><br>
-
+      <input type="password" placeholder="Ingrese una contraseña" id="password" name="password" autocomplete="new-password" required><br>
       <div style="text-align: left">
         <label for="psw-repeat"><b>Confirmar Contraseña</b></label>  
       </div>  
-      <input type="password" placeholder="Repita su contraseña" id="psw-repeat" name="psw-repeat" required>
-      
+      <input type="password" placeholder="Repita su contraseña" id="psw-repeat" name="psw-repeat" autocomplete="new-password" required>
       <div style="text-align: left">
         <label for="license"><b>Licencia</b></label>
       </div>
       <input type="text" placeholder="Ingrese una licencia válida" id="license" name="license" required>
-      
       <input type="submit" value="Registrarse">
       <p class="error escondido">Error al registrarse</p>
       <div class="login">
-        <label>¿Ya tienes una cuenta? - <span><a href="/">Iniciar sesión</a></span></label>
+        <strong>¿Ya tienes una cuenta? - <span><a href="/">Iniciar sesión</a></span></strong>
       </div>
     </div>
   </form>
