@@ -45,6 +45,7 @@ const getAniloxList = async()=>{
       $aniloxListFragment.appendChild($clone);
     });
     $aniloxList.querySelector("tbody").appendChild($aniloxListFragment);
+    $aniloxList.querySelector("tbody").firstElementChild.firstElementChild.classList.add("selected")
     $specificType.textContent = json1[0].type;
     $specificAngle.textContent = `${json1[0].angle}`;
     $specificVol.textContent = `${Math.round(((json1[0].nomvol*volMulti)+Number.EPSILON)*10)/10}`;
