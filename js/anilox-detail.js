@@ -930,7 +930,7 @@ const estimarVida = async(e)=>{
         if(el.volumePercent != null && el.volumeEstimated !== null && el.timeRemainingEstimated != null){
           $template.querySelector(".volume-percent").textContent = `${el.volumePercent}%`;
           $template.querySelector(".volume-estimated").textContent = el.volumeEstimated;
-          $template.querySelector(".time-remaining-estimated").textContent = `${el.timeRemainingEstimated} años`;
+          $template.querySelector(".time-remaining-estimated").textContent = `${el.timeRemainingEstimated} año(s)`;
           let $clone = d.importNode($template, true);
           $fragment.appendChild($clone);
         }
