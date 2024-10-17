@@ -103,6 +103,20 @@ d.addEventListener("click",e=>{
   }
 });
 
+d.addEventListener("DOMContentLoaded",()=>{
+  if(ls.getItem("sidebar") === null){
+    ls.setItem("sidebar","show");
+  }
+  if(ls.getItem("sidebar") === "show"){
+    $sideMenu.classList.remove("hide");
+    $logo.classList.remove("hide");
+  }
+  if(ls.getItem("sidebar") === "hide"){
+    $sideMenu.classList.add("hide");
+    $logo.classList.add("hide");
+  }
+});
+
 //Sidebar
 
 const $logOut = d.getElementById("log-out"),
