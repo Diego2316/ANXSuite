@@ -8,13 +8,15 @@
   text-align: center;
   box-shadow: var(--box-shadow);
   transition: all 300ms ease;
+  container-type: inline-size;
+  container-name: lista;
 }
 
 .right-content .lista:hover{
   box-shadow: none;
 }
 
-.right-content .lista table{
+table{
   width: 100%;
   text-align: center;
   padding-top: 0.5rem;
@@ -22,68 +24,60 @@
   font-weight: 400;
 }
 
-.right-content .lista table thead, th, tbody, tr, td{
+table thead, th, tbody, tr, td{
   display: block;
 }
 
-.right-content .lista table tbody{
+table tbody{
   height: 79vh;
   overflow-y: auto;
 }
 
-.right-content .lista table tbody td, thead th{
-  width: 11.2%;
+table tbody td, thead th{
+  width: 10.6%;
   float: left;
 }
 
-.right-content .lista table .pdf{
-  padding-left: 0.5rem;
-  width: 3%;
+table .pdf, .send, .trash{
+  width: 5%;
 }
 
-.right-content .lista table .send{
-  padding-left: 0.5rem;
-  width: 3%;
-}
-
-.right-content .lista table .trash{
-  padding-left: 1.5rem;
-  width: max-content;
+table .trash{
   color: red;
 }
 
-.right-content .lista thead tr{
+thead tr{
   height: 4.5rem;
   border-bottom: 1px solid var(--color-light);
 }
 
-.right-content .lista table thead th{
+table thead th{
   padding-top: 1rem;
 }
 
-.right-content .lista table tbody tr{
+table tbody tr{
   height: 3rem;
   margin-top: 1.5rem;
   border-bottom: 1px solid var(--color-light);
   color: var(--color-dark-variant);
 }
 
-.right-content .lista table tbody tr:last-child{
+table tbody tr:last-child{
   height: 2rem;
   border: none;
 }
 
-.right-content .lista table tbody .id, .master, .quote, .delete{
+table tbody .id, .master, .quote, .delete{
   cursor: pointer;
 }
 
-.right-content .lista table tbody td .barra-estado{
+table tbody td .barra-estado{
   width: 100%;
   margin-top: -0.5rem;
   border: 1px solid var(--color-dark-variant);
 }
 
-.right-content .lista table tbody td #barra{
+table tbody td #barra{
   height: 30px;
   text-align: center;
   line-height: 30px;
@@ -170,4 +164,54 @@
 
 .modal .modal-content .modal-body .modal-body-question h3{
   padding-bottom: 1rem;
+}
+
+/* Media Queries */
+
+@container lista (max-width: 800px){
+  table thead tr #purchase-date{
+    display: none;
+  }
+  table tbody tr .purchase-date{
+    display: none;
+  }
+  table tbody td, thead th{
+    width: 12.1%;
+  }
+}
+
+@container lista (max-width: 670px){
+  table thead tr #last-date{
+    display: none;
+  }
+  table tbody tr .last-date{
+    display: none;
+  }
+  table tbody td, thead th{
+    width: 14.1%;
+  }
+}
+
+@container lista (max-width: 580px){
+  table thead tr #brand{
+    display: none;
+  }
+  table tbody tr .brand{
+    display: none;
+  }
+  table tbody td, thead th{
+    width: 17%;
+  }
+}
+
+@container lista (max-width: 500px){
+  table thead tr #type{
+    display: none;
+  }
+  table tbody tr .type{
+    display: none;
+  }
+  table tbody td, thead th{
+    width: 21.2%;
+  }
 }

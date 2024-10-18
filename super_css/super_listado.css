@@ -8,6 +8,8 @@
   text-align: center;
   box-shadow: var(--box-shadow);
   transition: all 300ms ease;
+  container-type: inline-size;
+  container-name: table-container;
 }
 
 .right-content .table-container:hover{
@@ -32,23 +34,15 @@ table tbody{
 }
 
 table tbody td, thead th{
-  width: 9.9%;
+  width: 9.4%;
   float: left;
 }
 
-table .pdf{
-  padding-left: 0.5rem;
-  width: 3%;
-}
-
-table .send{
-  padding-left: 0.5rem;
-  width: 3%;
+table .pdf, .send, .trash{
+  width: 5%;
 }
 
 table .trash{
-  padding-left: 1.5rem;
-  width: max-content;
   color: red;
 }
 
@@ -192,4 +186,66 @@ select{
 
 .modal .modal-content .modal-body .modal-body-question h3{
   padding-bottom: 1rem;
+}
+
+/* Media Queries */
+
+@container table-container (max-width: 950px){
+  table thead tr .header-purchase{
+    display: none;
+  }
+  table tbody tr .purchase{
+    display: none;
+  }
+  table tbody td, thead th{
+    width: 10.6%;
+  }
+}
+
+@container table-container (max-width: 790px){
+  table thead tr .header-last{
+    display: none;
+  }
+  table tbody tr .last{
+    display: none;
+  }
+  table tbody td, thead th{
+    width: 12.1%;
+  }
+}
+
+@container table-container (max-width: 690px){
+  table thead tr .header-brand{
+    display: none;
+  }
+  table tbody tr .brand{
+    display: none;
+  }
+  table tbody td, thead th{
+    width: 14.1%;
+  }
+}
+
+@container table-container (max-width: 600px){
+  table thead tr .header-type{
+    display: none;
+  }
+  table tbody tr .type{
+    display: none;
+  }
+  table tbody td, thead th{
+    width: 17%;
+  }
+}
+
+@container table-container (max-width: 490px){
+  table thead tr .header-volume{
+    display: none;
+  }
+  table tbody tr .volume{
+    display: none;
+  }
+  table tbody td, thead th{
+    width: 21.2%;
+  }
 }
