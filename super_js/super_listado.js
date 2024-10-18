@@ -276,6 +276,7 @@ const drawOnChange = async(e)=>{
 const doOnClick = async(e)=>{
   //show master pdf
   if(e.target.matches(".master")){
+    $modalPdf.style.display = "block";
     try {
       let id = e.target.parentElement.parentElement.children[1].textContent;
       let viewer = d.createElement("object");
@@ -297,7 +298,6 @@ const doOnClick = async(e)=>{
       const data = b64toBlob(json.master.slice(28));
       viewer.setAttribute("data", data);
       $modalPdf.children[0].children[1].appendChild(viewer);
-      $modalPdf.style.display = "block";
     } catch (err) {
       errorMessage(err);
     }

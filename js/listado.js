@@ -136,6 +136,7 @@ const load = e=>{
 const showModalPdf = async(e)=>{
   if(e.target.matches(".master")){
     try {
+      $modalPdf.style.display = "block";
       let id = e.target.parentElement.parentElement.children[0].textContent;
       let viewer = d.createElement("object");
       viewer.setAttribute("type", "application/pdf");
@@ -156,7 +157,6 @@ const showModalPdf = async(e)=>{
       const data = b64toBlob(json.master.slice(28));
       viewer.setAttribute("data", data);
       $modalPdf.children[0].children[1].appendChild(viewer);
-      $modalPdf.style.display = "block";
     } catch (err) {
       console.log(err);
       let errorCode = err.status || "2316",

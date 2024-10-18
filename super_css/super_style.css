@@ -282,7 +282,7 @@ b{
   padding: 0.5rem;
   display: flex;
   flex-direction: column;
-  margin-left: 0 1rem;
+  margin: 0 1rem;
 }
 
 .modal .modal-body h3{
