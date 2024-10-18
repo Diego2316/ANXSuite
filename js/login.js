@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
     //   '../assets/anilox2.jpg',
     //   '../assets/anilox3_2.jpg',
     //   '../assets/anilox4.jpg',
-      '../assets/anilox5.jpg'
+      '../assets/anilox5.webp'
     ];
     
     var indiceAleatorio = Math.floor(Math.random() * imagenesDeFondo.length);
