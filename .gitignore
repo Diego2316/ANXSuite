@@ -1,4 +1,3 @@
-# Ignorar el archivo generador.py de la carpeta licencias
 /licencias/generador.py
 /js/prueba_pdf.js
 /node_modules
