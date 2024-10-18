@@ -1,9 +1,0 @@
-{
-     "css.customData": [
-          "./.vscode/custom-css.json"
-     ],
-     "liveServer.settings.port": 3000,
-     "vsicons.associations.folderDefault.folder": null,
-     "vsicons.associations.files": [],
-     "editor.fontSize": 13.5
-}
