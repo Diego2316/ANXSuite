@@ -342,6 +342,11 @@ const doOnClick = async(e)=>{
   }
   //quote
   if(e.target.matches(".quote")){
+    $quoteType.textContent = "";
+    $quoteAngle.textContent = "";
+    $quoteVol.textContent = "";
+    $quoteScreen.textContent = "";
+    $modalQuoteBox.style.display = "block";
     try {
       quoteId = e.target.dataset.id;
       let res = await fetch('/api/listado', {
@@ -362,7 +367,6 @@ const doOnClick = async(e)=>{
       $quoteAngle.textContent = quoteAngle;
       $quoteVol.textContent = quoteNomVol;
       $quoteScreen.textContent = quoteScreen;
-      $modalQuoteBox.style.display = "block";
     } catch (err) {
       let errorCode = err.status || "2316",
           errorStatus = err.statusText || "No se pudo establecer contacto con el servidor",
