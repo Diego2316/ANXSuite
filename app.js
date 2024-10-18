@@ -82,14 +82,6 @@ app.get('/ayuda.html', soloAdmin, (req, res) => {
   res.sendFile(path.join(__dirname, 'ayuda.html'));
 });
 
-app.get('/export-data', soloAdmin, (req, res) => {
-  res.sendFile(path.join(__dirname, 'export-data.html'));
-});
-
-app.get('/export-data.html', soloAdmin, (req, res) => {
-  res.sendFile(path.join(__dirname, 'export-data.html'));
-});
-
 app.get('/listado', soloAdmin, (req, res) => {
   res.sendFile(path.join(__dirname, 'listado.html'));
 });
@@ -136,14 +128,6 @@ app.get('/super_anilox-detail', soloSuperAdmin, (req, res) => {
 
 app.get('/super_anilox-detail.html', soloSuperAdmin, (req, res) => {
   res.sendFile(path.join(__dirname, 'super_anilox-detail.html'));
-});
-
-app.get('/super_export-data', soloSuperAdmin, (req, res) => {
-  res.sendFile(path.join(__dirname, 'super_export-data.html'));
-});
-
-app.get('/super_export-data.html', soloSuperAdmin, (req, res) => {
-  res.sendFile(path.join(__dirname, 'super_export-data.html'));
 });
 
 app.get('/super_listado', soloSuperAdmin, (req, res) => {
