@@ -1,4 +1,11 @@
-/licencias
-/js/prueba_pdf.js
-/node_modules
 /.vscode
+/js/prueba_pdf.js
+/js/chartToCanvasToBase64.js
+/js/pdf_report.js
+/js/prueba_dano.js
+/js/prueba_desgaste.js
+/js/prueba_limpieza.js
+/js/recta.js
+/licencias
+/node_modules
+/PDI
