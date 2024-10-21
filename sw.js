@@ -1,22 +1,22 @@
-const CACHE_NAME = 'v1_cache_anilox_manager',
+const CACHE_NAME = 'v1_cache_anx_suite',
       urlsToCache = [
         './controllers/autenticacion.js',
-        './anilox-detail.html',
-        './ayuda.html',
-        './index.html',
-        './listado.html',
-        './login.html',
-        './print-report.html',
-        './rcvpass.html',
-        './registro_licencia.html',
-        './registro.html',
-        './req-quotes.html',
-        './super_anilox-detail.html',
-        './super_index.html',
-        './super_listado.html',
-        './super_print-report.html',
-        './super_req-quotes.html',
-        './upload-file.html',
+        // './anilox-detail.html',
+        // './ayuda.html',
+        // './index.html',
+        // './listado.html',
+        // './login.html',
+        // './print-report.html',
+        // './rcvpass.html',
+        // './registro_licencia.html',
+        // './registro.html',
+        // './req-quotes.html',
+        // './super_anilox-detail.html',
+        // './super_index.html',
+        // './super_listado.html',
+        // './super_print-report.html',
+        // './super_req-quotes.html',
+        // './upload-file.html',
         './js/anilox-detail.js',
         './js/ayuda.js',
         './js/common.js',
@@ -72,13 +72,14 @@ const CACHE_NAME = 'v1_cache_anilox_manager',
         './assets/icons/manifest-icon-192.maskable.png',
         './assets/icons/manifest-icon-512.maskable.png',
         'https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&display=swap',
-        'https://fonts.googleapis.com/icon?family=Material+Icons+Sharp',
+        'https://fonts.googleapis.com/icon?family=Material+Icons+Sharp'
       ];
 
 self.addEventListener('install', e=>{
   e.waitUntil(
-    caches.open(CACHE_NAME)
-    .then(cache =>{
+    caches
+    .open(CACHE_NAME)
+    .then(cache => {
       return cache.addAll(urlsToCache)
       .then(() => self.skipWaiting())
     })
@@ -104,7 +105,8 @@ self.addEventListener('activate', e=>{
 
 self.addEventListener('fetch', e=>{
   e.respondWith(
-    caches.match(e.request)
+    caches
+    .match(e.request)
     .then(res => {
       if(res){
         return res;
