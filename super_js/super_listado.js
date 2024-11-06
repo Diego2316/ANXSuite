@@ -100,6 +100,7 @@ const populateSelector = async(selectedClient)=>{
 }
 
 const drawAll = async()=>{
+  $clientSelector.disabled = true;
   $tableBody.innerHTML = "";
   try {
     let res = await fetch("/api/clientes", {
@@ -179,12 +180,14 @@ const drawAll = async()=>{
       }
     }
     drawTable(completeList);
+    $clientSelector.disabled = false;
   } catch (err) {
     errorMessage(err);
   }
 }
 
 const drawSpecificClient = async(selectedClient)=>{
+  $clientSelector.disabled = true;
   $tableBody.innerHTML = "";
   let aniloxList = [];
   let analysisList = [];
@@ -246,6 +249,7 @@ const drawSpecificClient = async(selectedClient)=>{
     }
   }
   drawTable(completeList);
+  $clientSelector.disabled = false;
 }
 
 const drawOnLoad = async()=>{
@@ -253,7 +257,7 @@ const drawOnLoad = async()=>{
     populateSelector("none");
     drawAll();
   }
-  if(ss.getItem("client-list") !== "none"){
+  else if(ss.getItem("client-list") !== "none"){
     let selectedClient = ss.getItem("client-list");
     populateSelector(selectedClient);
     drawSpecificClient(selectedClient);
@@ -267,7 +271,7 @@ const drawOnChange = async(e)=>{
     if(selectedClient === "none"){
       drawAll();
     }
-    if(selectedClient !== "none"){
+    else if(selectedClient !== "none"){
       drawSpecificClient(selectedClient);
     }
   }
