@@ -242,7 +242,7 @@ const getUserLevelClient = async()=>{
   ss.setItem("user",json.user);
   ss.setItem("level",json.level);
   ss.setItem("client", json.client);
-  $clientLogo.src = `./assets/${json.client}-logo.png`;
+  $clientLogo.src = `./assets/${json.client}-logo.webp`;
   $user.textContent = ss.getItem("user");
   let level = ss.getItem("level");
   if(level === "1"){

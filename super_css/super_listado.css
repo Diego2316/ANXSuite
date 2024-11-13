@@ -104,7 +104,7 @@ table tbody td #barra{
   box-shadow: none;
 }
 
-.right-content .selector-container h3{
+.right-content .selector-container h2{
   font-size: 16px;
   font-weight: 500;
   color: var(--color-dark);

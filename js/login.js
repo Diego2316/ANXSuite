@@ -27,10 +27,10 @@ document.getElementById("login-form").addEventListener("submit", async(event) =>
 
 document.addEventListener('DOMContentLoaded', function() {
     var imagenesDeFondo = [
-    //   '../assets/anilox1_2.jpeg',
-    //   '../assets/anilox2.jpg',
-    //   '../assets/anilox3_2.jpg',
-    //   '../assets/anilox4.jpg',
+    //   '../assets/anilox1_2.webp',
+    //   '../assets/anilox2.webp',
+    //   '../assets/anilox3_2.webp',
+    //   '../assets/anilox4.webp',
       '../assets/anilox5.webp'
     ];
     
@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // document.body.style.backgroundAttachment = 'fixed';
     document.body.style.backgroundRepeat = 'no-repeat'; // Evita que el fondo se repita
 
-    var logoBlanco = '../assets/LogoANXSuite_blanco.png'; 
+    var logoBlanco = '../assets/LogoANXSuite_blanco.webp'; 
     var contenedorMarcaDeAgua = document.getElementById('logoMarcaDeAgua');
 
     if (imagenSeleccionada.includes('anilox3_2.jpg')) {

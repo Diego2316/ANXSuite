@@ -100,7 +100,7 @@ const closeModal = e=>{
 const submit = async(e)=>{
   e.preventDefault();
   if(e.target === $form){ // Formulario inicial (carga de csv e imagen)
-    if($image.src.includes("anilox-placeholder.jpg")){
+    if($image.src.includes("anilox-placeholder.webp")){
       alert("Debe seleccionar una imagen de ánilox para poder importar los datos");
       return;
     }

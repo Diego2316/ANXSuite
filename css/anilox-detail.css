@@ -95,10 +95,10 @@
   cursor: pointer;
 }
 
-.right-content .detail-content .data-top h3{
+.right-content .detail-content .data-top h2{
   font-size: 17px;
-  font-weight: 500;
   padding-right: 0.5rem;
+  font-weight: bold;
 }
 
 .right-content .detail-content .data-top p{
@@ -106,10 +106,6 @@
   font-weight: 500;
   padding-right: 0.5rem;
   padding-left: 0.25rem;
-}
-
-.right-content .detail-content .data-top h3{
-  font-weight: bold;
 }
 
 .right-content .detail-content .data-top > div:hover{
@@ -193,13 +189,14 @@
   padding-left: 0.5rem;
 }
 
-.right-content .detail-content .data-bottom h3{
+.right-content .detail-content .data-bottom h2{
   font-size: 20px;
+  font-weight: bold;
   text-align: center;
   padding-top: 0.3rem;
 }
 
-.right-content .detail-content .data-bottom h4{
+.right-content .detail-content .data-bottom h3{
   font-size: 12px;
   text-align: center;
 }
