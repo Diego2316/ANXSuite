@@ -622,7 +622,7 @@ async function tablaAniloxList(req, res) {
         if (err) throw err;
         // Luego se inserta una fila en anilox_history con los valores de id, date, volume, report y empresa
         const sqlModificarHistory = 'INSERT INTO anilox_history (anilox, id, date, volume, diagnostico, report, empresa) VALUES (?,?,?,?,?,?,?)';
-        db.query(sqlModificarHistory, [id, 1, last, volume, "Rodillo en buen estado", "https://www.africau.edu/images/default/sample.pdf",sesion_empresa], (err2, result2) => {
+        db.query(sqlModificarHistory, [id, 1, last, volume, "Rodillo en buen estado", "https://pdfobject.com/pdf/sample.pdf",sesion_empresa], (err2, result2) => {
           if (err2) throw err2;
           let nextDate = new Date(last);
           nextDate.setMonth(nextDate.getMonth() + 6); // Se suma 6 meses a la fecha de última revisión
