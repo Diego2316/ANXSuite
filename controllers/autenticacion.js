@@ -14,9 +14,9 @@ const fs = require('fs'); // (file system) Necesario para usar los archivos PDF 
 const os = require('os'); // (operating system) Necesario para obtener la ruta temporal del sistema.
 
 const db = mysql.createPool({  // Creación de variable db para la conexión a la BD MySQL
-  host: 'anxsuite.crkw6qaew4si.sa-east-1.rds.amazonaws.com',
+  host: 'anxsuite-1.crkw6qaew4si.sa-east-1.rds.amazonaws.com',
   user: 'admin',
-  password: '104-55Fppl2',
+  password: '0fJWVuYZ4epZoIXFRHbL',
   database: 'ANDERS'
 });
 
