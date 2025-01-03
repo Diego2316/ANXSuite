@@ -13,7 +13,7 @@ const $image = d.getElementById("uploaded-image"),
 
 const $pdfUpload = d.getElementById("new-master");
 
-let image, data, master;
+let image, data, master, esNuevo;
 
 let alreadyExists, saveId, saveBrand, saveType, savePurchase, saveMaster, saveLast, savePatron, saveNomVol;
 
@@ -28,6 +28,61 @@ const $modalExtraAnilox = d.getElementById("modal-extra-anilox"),
       $extraSubmit = d.getElementById("extra-submit"),
       $extraRecorrido = d.getElementById("extra-recorrido");
 
+const isNew = (image) => {
+  const canvas = document.createElement("canvas"),
+        ctx = canvas.getContext("2d"),
+        cw = 640, ch = 480;
+        
+canvas.width = cw, canvas.height = ch;
+
+  const draw = (im) =>{
+    ctx.clearRect(0, 0, cw, ch);
+    ctx.drawImage(im,0,0);
+    return ctx.getImageData(0, 0, cw, ch);
+  }
+
+  const getThreshold = (color) => {
+    let rThr = 0, gThr = 0, bThr = 0;
+    switch (color) {
+      case "red": rThr = 0, gThr = 150, bThr = 150; break;
+      case "green": rThr = 150, gThr = 0, bThr = 150; break;
+      case "blue": rThr = 150, gThr = 150, bThr = 0; break;
+      default: break;
+    }
+    return [rThr, gThr, bThr];
+  }
+
+  const getMask = (imData, color) => {
+    const data = imData.data;
+    let count = 0;
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i], g = data[i + 1], b = data[i + 2];
+      const [rThr, gThr, bThr] = getThreshold(color);
+      const rCond = r >= rThr && g <= gThr && b <= bThr && color === "red";
+      const gCond = r <= rThr && g >= gThr && b <= bThr && color === "green";
+      const bCond = r <= rThr && g <= gThr && b >= bThr && color === "blue";
+      const cond = rCond || gCond || bCond;
+      if(cond) count++
+    }
+    return count;
+  }
+
+  let im = new Image();
+  im.src = image;
+  im.onload = function(){
+    const data = draw(this);
+    const rCount = getMask(data, "red");
+    const gCount = getMask(data, "green");
+    const bCount = getMask(data, "blue");
+    const tCount = rCount + gCount + bCount;
+    const rRatio = Math.round(((rCount/tCount * 100) + Number.EPSILON) * 100) / 100;
+    const gRatio = Math.round(((gCount/tCount * 100) + Number.EPSILON) * 100) / 100;
+    const bRatio = Math.round(((bCount/tCount * 100) + Number.EPSILON) * 100) / 100;
+    if(rRatio >= 10 && rRatio <= 25 && gRatio >= 30 && gRatio <= 45 && bRatio >= 40 && bRatio <= 55) esNuevo = 1
+    else esNuevo = 0
+  }
+}
+
 const uploadImage = e=>{
   if(e.target === $imageUpload){
     if(e.target.files[0].type !== "image/jpeg"){
@@ -36,6 +91,7 @@ const uploadImage = e=>{
     }
     image = e.target.files[0];
     $image.src = URL.createObjectURL(image);
+    isNew($image.src);
   }
 }
 
@@ -112,11 +168,6 @@ const submit = async(e)=>{
       alert("Archivo CSV e imagen de ánilox no coinciden");
       return;
     }
-    // if(Date.parse(image.lastModifiedDate) !== Date.parse(data.lastModifiedDate)){
-    //   alert("Fecha de archivo CSV e imagen de ánilox no coinciden");
-    //   return;
-    // }
-    
     try {
       let res = await fetch("/api/listado", { // Ejecuta la línea 577 de autenticacion.js (Condición else{})
       method: 'POST',
@@ -176,33 +227,60 @@ const submit = async(e)=>{
       const imagen = await toBase64(image); // Recoge la imagen y pdf cargadas en el formulario inicial ($form)
       const pdf = await toBase64(master);
 
-      let options = {
-        method: "POST",
-        headers: {
-          "Content-type": "application/json; charset=UTF-8",
-        },        
-        body: JSON.stringify({
-          id: $code.value,
-          brand: e.target.brand.value,
-          purchase: e.target.purchase.value,
-          volume: $volume.value,
-          nomvol: e.target.nomvol.value,
-          depth: $depth.value,
-          opening: $opening.value,
-          wall: $wall.value,
-          screen: $screen.value,
-          angle: $angle.value,
-          last: $date.value,
-          master: pdf,  
-          patron: imagen,
-          insertar: 1,
-        }),
-      },
-        res = await fetch("api/listado", options); // Se ejecuta else if(insertar) ni bien se da submit al formulario de nuevo anilox
-
-      let json = await res.json();
-
-      if(!res.ok) throw{status: res.status, statusText: res.statusText};
+      if(esNuevo){
+        let options = {
+          method: "POST",
+          headers: {
+            "Content-type": "application/json; charset=UTF-8",
+          },        
+          body: JSON.stringify({
+            id: $code.value,
+            brand: e.target.brand.value,
+            purchase: e.target.purchase.value,
+            volume: $volume.value,
+            nomvol: e.target.nomvol.value,
+            depth: $depth.value,
+            opening: $opening.value,
+            wall: $wall.value,
+            screen: $screen.value,
+            angle: $angle.value,
+            last: $date.value,
+            master: pdf,  
+            patron: imagen,
+            insertarNuevo: 1,
+          }),
+        },
+            res = await fetch("api/listado", options); // Se ejecuta else if(insertarNuevo) ni bien se da submit al formulario de nuevo anilox
+        if(!res.ok) throw{status: res.status, statusText: res.statusText};
+      }
+      else{
+        let options = {
+          method: "POST",
+          headers: {
+            "Content-type": "application/json; charset=UTF-8",
+          },        
+          body: JSON.stringify({
+            id: $code.value,
+            brand: e.target.brand.value,
+            purchase: e.target.purchase.value,
+            volume: $volume.value,
+            nomvol: e.target.nomvol.value,
+            depth: $depth.value,
+            opening: $opening.value,
+            wall: $wall.value,
+            screen: $screen.value,
+            angle: $angle.value,
+            last: $date.value,
+            master: pdf,
+            patron: 0,
+            revision: imagen,
+            insertarUsado: 1,
+          }),
+        },
+            res = await fetch("api/listado", options); // Se ejecuta else if(insertarNuevo) ni bien se da submit al formulario de nuevo anilox
+        if(!res.ok) throw{status: res.status, statusText: res.statusText};
+      }
+      $formNew.submit();
     }
     catch (err) {
       console.log(err);
