@@ -638,17 +638,19 @@ async function tablaAniloxList(req, res) {
     else if (insertarUsado) { // Inserción de anilox nuevo Usado
       // Primero se inserta una fila en anilox_list con los datos del nuevo Anilox
       const sql = 'INSERT INTO anilox_list (id, brand, type, purchase, recorrido, nomvol, volume, depth, opening, wall, screen, angle, last, master, patron, revision, empresa) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)';
-      db.query(sql, [id, brand, tipo, purchase, 0, nomvol, volume, depth, opening, wall, screen, angle, last, master, patron, revision, sesion_empresa], (err, result) => {
+      db.query(sql, [id, brand, tipo, purchase, 0, nomvol, volume, depth, opening, wall, screen, angle, last, master, patron, revision, sesion_empresa], async (err, result) => {
         if (err) throw err;
+        const res_analysis = await analysis(patron, revision);
+        const {porcentajeTapadas, porcentajeDesgaste, porcentajeDano, estado, diagnostico, recomendacion} = res_analysis;
         // Luego se inserta una fila en anilox_history con los valores de id, date, volume, report y empresa
         const sqlModificarHistory = 'INSERT INTO anilox_history (anilox, id, date, volume, diagnostico, report, empresa) VALUES (?,?,?,?,?,?,?)';
-        db.query(sqlModificarHistory, [id, 1, last, volume, "Rodillo en buen estado", master,sesion_empresa], (err2, result2) => {
+        db.query(sqlModificarHistory, [id, 1, last, volume, diagnostico, master,sesion_empresa], (err2, result2) => {
           if (err2) throw err2;
           let nextDate = new Date(last);
           nextDate.setMonth(nextDate.getMonth() + 6); // Se suma 6 meses a la fecha de última revisión
           // Se inserta una fila en anilox_analysis con los valores de id, next, estado, tapadas, danadas, desgastadas y empresa
           const sqlInsert = 'INSERT INTO anilox_analysis (id, next, estado, tapadas, danadas, desgastadas, diagnostico, recomendacion, empresa) VALUES (?,?,?,?,?,?,?,?,?)';
-          db.query(sqlInsert, [id, nextDate, 100, 0, 0, 0, "Rodillo en buen estado", "Mantener calidad de manejo y lavado", sesion_empresa], (err3, result3) => {
+          db.query(sqlInsert, [id, nextDate, estado, porcentajeTapadas, porcentajeDano, porcentajeDesgaste, diagnostico, recomendacion, sesion_empresa], (err3, result3) => {
             if (err3) throw err3;
             return res.status(200).send({ status: "Success", message: "Anilox insertado correctamente" });
           });

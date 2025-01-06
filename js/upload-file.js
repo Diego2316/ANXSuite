@@ -28,6 +28,16 @@ const $modalExtraAnilox = d.getElementById("modal-extra-anilox"),
       $extraSubmit = d.getElementById("extra-submit"),
       $extraRecorrido = d.getElementById("extra-recorrido");
 
+let patronGenerico;
+const canvas = d.createElement("canvas"), ctx = canvas.getContext("2d");
+canvas.width = 640, canvas.height = 480;
+let newPattern = new Image();
+newPattern.src = '/assets/patron-generico.webp';
+newPattern.onload = function(){
+  ctx.drawImage(this, 0, 0);
+  patronGenerico = canvas.toDataURL();
+}
+
 const isNew = (image) => {
   const canvas = document.createElement("canvas"),
         ctx = canvas.getContext("2d"),
@@ -272,12 +282,12 @@ const submit = async(e)=>{
             angle: $angle.value,
             last: $date.value,
             master: pdf,
-            patron: 0,
+            patron: patronGenerico,
             revision: imagen,
             insertarUsado: 1,
           }),
         },
-            res = await fetch("api/listado", options); // Se ejecuta else if(insertarNuevo) ni bien se da submit al formulario de nuevo anilox
+            res = await fetch("api/listado", options); // Se ejecuta else if(insertarUsado) ni bien se da submit al formulario de nuevo anilox
         if(!res.ok) throw{status: res.status, statusText: res.statusText};
       }
       $formNew.submit();
@@ -336,27 +346,25 @@ const recorrido = async(e)=>{ // Página de "Ingrese el recorrido del anilox"
       if(!res.ok) throw{status: res.status, statusText: res.statusText};
 
 // --------CÓDIGO PARA GENERAR PDF-----
-      let res2 = await fetch('api/pdf', { // Se ejecuta después del procesamiento de imágenes
-        method: "POST",
-        headers: {
-          "Content-type": "application/json; charset=UTF-8",
-        },
-        body: JSON.stringify({
-          id: saveId,
-          brand: saveBrand,
-          recorrido: valRecorrido,
-          volume: $volume.value,
-          screen: $screen.value,
-          last: $date.value,
-          patron: savePatron,
-          revision: imagen,
-          insertar: 1,
-        }),
-      });
-      let json2 = await res2.json();
-      json2 = json2.result;
+      // let res2 = await fetch('api/pdf', { // Se ejecuta después del procesamiento de imágenes
+      //   method: "POST",
+      //   headers: {
+      //     "Content-type": "application/json; charset=UTF-8",
+      //   },
+      //   body: JSON.stringify({
+      //     id: saveId,
+      //     brand: saveBrand,
+      //     volume: $volume.value,
+      //     screen: $screen.value,
+      //     last: $date.value,
+      //     patron: savePatron,
+      //     revision: imagen,
+      //   }),
+      // });
+      // let json2 = await res2.json();
+      // json2 = json2.result;
 
-      if(!res2.ok) throw{status: res2.status, statusText: res2.statusText};  
+      // if(!res2.ok) throw{status: res2.status, statusText: res2.statusText};  
       $formExtra.submit();  // Envia el formulario de recorrido
     } 
     catch (err) {
