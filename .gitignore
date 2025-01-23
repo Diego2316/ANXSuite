@@ -1,6 +1,9 @@
 /.vscode
 /js/prueba_pdf.js
 /js/chartToCanvasToBase64.js
+/js/modelo_reporte_final_alt.pdf
+/js/modelo_reporte_final3.pdf
+/js/output_with_image.pdf
 /js/pdf_report.js
 /js/prueba_dano.js
 /js/prueba_desgaste.js

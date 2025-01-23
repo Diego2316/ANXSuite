@@ -346,26 +346,25 @@ const recorrido = async(e)=>{ // Página de "Ingrese el recorrido del anilox"
       if(!res.ok) throw{status: res.status, statusText: res.statusText};
 
 // --------CÓDIGO PARA GENERAR PDF-----
-      // let res2 = await fetch('api/pdf', { // Se ejecuta después del procesamiento de imágenes
-      //   method: "POST",
-      //   headers: {
-      //     "Content-type": "application/json; charset=UTF-8",
-      //   },
-      //   body: JSON.stringify({
-      //     id: saveId,
-      //     brand: saveBrand,
-      //     volume: $volume.value,
-      //     screen: $screen.value,
-      //     last: $date.value,
-      //     patron: savePatron,
-      //     revision: imagen,
-      //   }),
-      // });
-      // let json2 = await res2.json();
-      // json2 = json2.result;
-
-      // if(!res2.ok) throw{status: res2.status, statusText: res2.statusText};  
-      $formExtra.submit();  // Envia el formulario de recorrido
+      let res2 = await fetch('api/pdf', { // Se ejecuta después del procesamiento de imágenes
+        method: "POST",
+        headers: {
+          "Content-type": "application/json; charset=UTF-8",
+        },
+        body: JSON.stringify({
+          id: saveId,
+          brand: saveBrand,
+          volume: $volume.value,
+          screen: $screen.value,
+          last: $date.value,
+          revision: imagen,
+        }),
+      });
+      let json2 = await res2.json();
+      json2 = json2.result;
+      console.log(json2);
+      if(!res2.ok) throw{status: res2.status, statusText: res2.statusText};  
+      // $formExtra.submit();  // Envia el formulario de recorrido
     } 
     catch (err) {
       console.log(err);
