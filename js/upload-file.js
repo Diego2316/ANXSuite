@@ -88,7 +88,7 @@ canvas.width = cw, canvas.height = ch;
     const rRatio = Math.round(((rCount/tCount * 100) + Number.EPSILON) * 100) / 100;
     const gRatio = Math.round(((gCount/tCount * 100) + Number.EPSILON) * 100) / 100;
     const bRatio = Math.round(((bCount/tCount * 100) + Number.EPSILON) * 100) / 100;
-    if(rRatio >= 10 && rRatio <= 25 && gRatio >= 30 && gRatio <= 45 && bRatio >= 40 && bRatio <= 55) esNuevo = 1
+    if(rRatio >= 10 && rRatio <= 30 && gRatio >= 25 && gRatio <= 45 && bRatio >= 40 && bRatio <= 60) esNuevo = 1
     else esNuevo = 0
   }
 }
