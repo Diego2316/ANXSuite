@@ -1214,12 +1214,12 @@ async function generarPdf(req, res) {
   const inputPath = path.resolve(__dirname, './modelo_reporte_final6.pdf');
   const outputPath = path.resolve(__dirname, './out.pdf');
   try {
-    let { id, revision, last, brand, volume, screen } = req.body;
+    let { id, last, brand, type, purchase, volume, screen, revision } = req.body;
     const sql_PDF = 'SELECT * FROM anilox_analysis WHERE id = ?';
-    const result = await queryDB(sql_PDF, [id]);
+    // const result = await queryDB(sql_PDF, [id]);
 
     try{
-      const textReplacer = async () => {
+      const textReplacerCommon = async () => {
         try {
           const doc = await PDFNet.PDFDoc.createFromFilePath(inputPath);
           await doc.initSecurityHandler();
@@ -1227,6 +1227,13 @@ async function generarPdf(req, res) {
           const page1 = await doc.getPage(1);
       
           await replacer.addString("ANILOX", id);
+          await replacer.addString("date", last);
+          await replacer.addString("brand", brand);
+          await replacer.addString("type", type);
+          await replacer.addString("purchase", purchase);
+          await replacer.addString("volume", volume);
+          await replacer.addString("screen", screen);
+          await replacer.addString("last", last);
           await replacer.process(page1);
       
           doc.save(outputPath, PDFNet.SDFDoc.SaveOptions.e_linearized);
@@ -1235,7 +1242,7 @@ async function generarPdf(req, res) {
           res.status(500).send('Error al reemplazar el texto en el PDF');
         }
       }
-      PDFNet.runWithCleanup(textReplacer, "demo:1738013984595:7e94569d0300000000b459c6dd4b66b301ba65c1bbe1d2f4e8c4d1b39d").then(() => {
+      PDFNet.runWithCleanup(textReplacerCommon, "demo:1738013984595:7e94569d0300000000b459c6dd4b66b301ba65c1bbe1d2f4e8c4d1b39d").then(() => {
         fs.readFile(outputPath, (err, data) => {
           if(err){
             res.statusCode = 500;

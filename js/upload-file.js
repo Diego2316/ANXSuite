@@ -353,10 +353,12 @@ const recorrido = async(e)=>{ // Página de "Ingrese el recorrido del anilox"
         },
         body: JSON.stringify({
           id: saveId,
+          last: $date.value,
           brand: saveBrand,
+          type: saveType,
+          purchase: savePurchase,
           volume: $volume.value,
           screen: $screen.value,
-          last: $date.value,
           revision: imagen,
         }),
       });
@@ -364,7 +366,7 @@ const recorrido = async(e)=>{ // Página de "Ingrese el recorrido del anilox"
       json2 = json2.result;
       console.log(json2);
       if(!res2.ok) throw{status: res2.status, statusText: res2.statusText};  
-      // $formExtra.submit();  // Envia el formulario de recorrido
+      $formExtra.submit();  // Envia el formulario de recorrido
     } 
     catch (err) {
       console.log(err);
