@@ -1211,44 +1211,44 @@ async function generarPdf(req, res) {
   //   x: 23,     y: 45,
   //   width: 545, height: 335
   // }
-
+  const inputPath = path.resolve(__dirname, './modelo_reporte_final6.pdf');
+  const outputPath = path.resolve(__dirname, './out.pdf');
   try {
     let { id, revision, last, brand, volume, screen } = req.body;
     const sql_PDF = 'SELECT * FROM anilox_analysis WHERE id = ?';
     const result = await queryDB(sql_PDF, [id]);
 
-    const replaceText = async () => {
-      try{
-        const pdfdoc = await PDFNet.PDFDoc.createFromFilePath(pdfPath);
-        await pdfdoc.initSecurityHandler();
-        const replacer = await PDFNet.ContentReplacer.create();
-        const page = await pdfdoc.getPage(1); 
-        const pageSet = await PDFNet.PageSet.createRange(1, 1);
-        const page2 = await pdfdoc.getPage(2);
-        const pageSet2 = await PDFNet.PageSet.createRange(2, 2);
-        await replacer.addString('ANILOX', id);
-      }
-      catch (error) {
-        console.error('Error al reemplazar el texto en el PDF:', error);
-        res.status(500).send('Error al reemplazar el texto en el PDF');
-      }      
-    }
-    const outputPath = path.join(__dirname, '/output.pdf');
     try{
-      PDFNet.runWithCleanup(replaceText, "demo:1720195871717:7f8468a2030000000072c68a051f8b60b73e2b966862266ca0be4eacb7").then(() => {
-        console.log("PDF generado con éxito");
+      const textReplacer = async () => {
+        try {
+          const doc = await PDFNet.PDFDoc.createFromFilePath(inputPath);
+          await doc.initSecurityHandler();
+          const replacer = await PDFNet.ContentReplacer.create();
+          const page1 = await doc.getPage(1);
+      
+          await replacer.addString("ANILOX", id);
+          await replacer.process(page1);
+      
+          doc.save(outputPath, PDFNet.SDFDoc.SaveOptions.e_linearized);
+        } catch (error) {
+          console.error('Error al reemplazar el texto en el PDF:', error);
+          res.status(500).send('Error al reemplazar el texto en el PDF');
+        }
+      }
+      PDFNet.runWithCleanup(textReplacer, "demo:1738013984595:7e94569d0300000000b459c6dd4b66b301ba65c1bbe1d2f4e8c4d1b39d").then(() => {
         fs.readFile(outputPath, (err, data) => {
-            if (err) {
-                res.statusCode = 500;
-                res.send(err);
-            } else {                              
-                return res.status(200).send({ status: "Success", message: "PDF generado con éxito", result});
-            }                   
+          if(err){
+            res.statusCode = 500;
+            res.end(err);
+          } else {
+            res.setHeader('Content-Type', 'application/pdf');
+            res.end(data);
+          }
         })
       }).catch(err => {
-          res.statusCode = 500;
-          res.send(err);
-      }); 
+        res.statusCode = 500;
+        res.end(err);
+      })
     }
     catch (error) {
       console.log("Error en PDFNet.runWithCleanup: ",error);
