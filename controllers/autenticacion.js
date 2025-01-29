@@ -1099,24 +1099,24 @@ async function superHistory(req, res) {
 
 // -----------------Funciones para generar el reporte PDF ------------------------//
 
-// async function addBase64ImageToPDF(doc, pSet, base64Image, options) {    
-//   const imageBuffer = Buffer.from(base64Image, 'base64'); // Convertir la cadena base64 a buffer 
-//   const tempImagePath = path.join(os.tmpdir(), 'tempImage.jpg'); 
-//   fs.writeFileSync(tempImagePath, imageBuffer); // Escribir la cadena en un archivo temporal 
+async function addBase64ImageToPDF(doc, pSet, base64Image, options) {    
+  const imageBuffer = Buffer.from(base64Image, 'base64'); // Convertir la cadena base64 a buffer 
+  const tempImagePath = path.join(os.tmpdir(), 'tempImage.jpg'); 
+  fs.writeFileSync(tempImagePath, imageBuffer); // Escribir la cadena en un archivo temporal 
 
-//   const pdfImage = await PDFNet.Image.createFromFile(doc, tempImagePath); // Cargar la imagen desde el archivo temporal
+  const pdfImage = await PDFNet.Image.createFromFile(doc, tempImagePath); // Cargar la imagen desde el archivo temporal
 
-//   // Usar PDFNet.Stamper para colocar la imagen en el documento PDF
-//   const stamper = await PDFNet.Stamper.create(PDFNet.Stamper.SizeType.e_absolute_size, options.width, options.height);
-//   stamper.setAlignment(PDFNet.Stamper.HorizontalAlignment.e_horizontal_left, PDFNet.Stamper.VerticalAlignment.e_vertical_top);
-//   stamper.setPosition(options.x, options.y);
-//   try {
-//       await stamper.stampImage(doc, pdfImage, pSet);
-//   } catch (error) {
-//       console.error('Error al estampar la imagen:', error);
-//   }
-//   fs.unlinkSync(tempImagePath); // Opcional: Eliminar el archivo temporal de la imagen 
-// }
+  // Usar PDFNet.Stamper para colocar la imagen en el documento PDF
+  const stamper = await PDFNet.Stamper.create(PDFNet.Stamper.SizeType.e_absolute_size, options.width, options.height);
+  stamper.setAlignment(PDFNet.Stamper.HorizontalAlignment.e_horizontal_left, PDFNet.Stamper.VerticalAlignment.e_vertical_top);
+  stamper.setPosition(options.x, options.y);
+  try {
+      await stamper.stampImage(doc, pdfImage, pSet);
+  } catch (error) {
+      console.error('Error al estampar la imagen:', error);
+  }
+  fs.unlinkSync(tempImagePath); // Opcional: Eliminar el archivo temporal de la imagen 
+}
 
 // function encontrarValoresCercanosMenores(arr, objetivos) {
 //   return objetivos.map(objetivo => {
@@ -1176,65 +1176,722 @@ async function superHistory(req, res) {
 //   });
 // }
 
+const dateEstimation = (measuredVol, measuredDates, estimatedVol)=>{
+  let estimatedDates = measuredDates.map(el => el);
+  for(let i = 0; i < estimatedVol.length - measuredVol.length; i++){
+    let last = `${estimatedDates[estimatedDates.length - 1]} 00:00:00`;
+    last = new Date(last);
+    let next = new Date(last.setMonth(last.getMonth() + 6)),
+        year = String(next.getFullYear()),
+        month = String(next.getMonth() + 1),
+        day = String(next.getDate());
+    month.length < 2 ? month = `0${month}` : month = month;
+    day.length < 2 ? day = `0${day}` : day = day;
+    next = [year, month, day].join('-');
+    estimatedDates.push(next);
+  }
+  return estimatedDates;
+}
+
+const percentEstimation = (nomVol, estimatedVol)=>{
+  let estimatedIndex = [], estimatedValue = [];
+  estimatedVol.some((el, index) => {
+    if(el <= 0.9*nomVol){
+      estimatedIndex.push(index);
+      estimatedValue.push(el);
+      return true;
+    }
+  });
+  estimatedVol.some((el, index) => {
+    if(el <= 0.8*nomVol){
+      estimatedIndex.push(index);
+      estimatedValue.push(el);
+      return true;
+    }
+  });
+  estimatedVol.some((el, index) => {
+    if(el <= 0.7*nomVol){
+      estimatedIndex.push(index);
+      estimatedValue.push(el);
+      return true;
+    }
+  });
+  estimatedIndex.push(estimatedVol.length - 1);
+  estimatedValue.push(estimatedVol[estimatedVol.length - 1]);
+  let estimatedPercent = {0: estimatedIndex, 1: estimatedValue};
+  return estimatedPercent;
+}
+
+const linearRegression = (nomVol, measuredVol, measuredDates)=>{
+  let lim = 0.6*nomVol, estimatedVol = [], estimatedDates = [], estimatedPercent = {};
+  let m = 0, b = 0;
+  let xSum = 0, ySum = 0, xxSum = 0, xySum = 0, count = measuredVol.length;
+  if(measuredVol[measuredVol.length - 1] > lim){
+    for(let i = 0; i < count ; i++){
+      xSum += i;
+      ySum += measuredVol[i];
+      xxSum += i * i;
+      xySum += i * measuredVol[i];
+    }
+    m = (count * xySum - xSum * ySum) / (count * xxSum - xSum * xSum);
+    if(m <= -0.01){
+      b = (ySum / count) - (m * xSum) / count;
+      let h = ((lim - b) / m) + 10;
+      for(let i = 0; i < h; i++){
+        let vol = Math.round(((i * m + b) + Number.EPSILON) * 1000) / 1000;
+        estimatedVol.push(vol);
+        if(estimatedVol[i] < lim){
+          break;
+        }
+      }
+      estimatedPercent = percentEstimation(nomVol, estimatedVol);
+      estimatedDates = dateEstimation(measuredVol, measuredDates, estimatedVol);
+    }
+    else estimatedVol = 2000;
+  }
+  else estimatedVol = 1000;
+  return [m, b, estimatedVol, estimatedDates, estimatedPercent];
+}
+
 async function generarPdf(req, res) {  
-  let pdfPath = path.join(__dirname, '/modelo_reporte_final6.pdf');
-  // const canvas_bcm = createCanvas(800, 185);
-  // const bcm_ctx = canvas_bcm.getContext('2d'); // Se crea un canva para el gráfico de BCM
-  // const canvas_EOL = createCanvas(800, 350);
-  // const EOL_ctx = canvas_EOL.getContext('2d'); // Se crea un canva para el gráfico de EOL
-  // const coord_revision = {
-  //   x: 215,     y: 688,     
-  //   width: 205, height: 120 
-  // };
-  
-  // const coord_tapadas = {
-  //   x: 45,     y: 320,
-  //   width: 160, height: 193
-  // };
-  
-  // const coord_danadas = {
-  //   x: 225,     y: 320,
-  //   width: 160, height: 193
-  // };
-  
-  // const coord_desgastadas = {
-  //   x: 405,     y: 320,
-  //   width: 165, height: 193
-  // };
-  
-  // const coord_historial = {
-  //   x: 23,     y: 532,
-  //   width: 555, height: 185
-  // };
-
-  // const coord_graficaEOL = {
-  //   x: 23,     y: 45,
-  //   width: 545, height: 335
-  // }
-  const inputPath = path.resolve(__dirname, './modelo_reporte_final6.pdf');
-  const outputPath = path.resolve(__dirname, './out.pdf');
+  // Coordenadas y tamaños de imagenes de graficos
+  const coord_revision = {
+    x: 215,     y: 688,     
+    width: 205, height: 120 
+  };
+  const coord_tapadas = {
+    x: 45,     y: 320,
+    width: 160, height: 193
+  };
+  const coord_danadas = {
+    x: 225,     y: 320,
+    width: 160, height: 193
+  };
+  const coord_desgastadas = {
+    x: 405,     y: 320,
+    width: 165, height: 193
+  };
+  const coord_historial = {
+    x: 23,     y: 532,
+    width: 555, height: 185
+  };
+  const coord_graficaEOL = {
+    x: 23,     y: 45,
+    width: 545, height: 335
+  }
+  let inputPath = path.resolve(__dirname, './modelo_reporte_final6.pdf'); // Ruta de modelo por defecto
+  const outputPath = path.resolve(__dirname, './out.pdf'); // Ruta de salida del PDF
   try {
-    let { id, last, brand, type, purchase, volume, screen, revision } = req.body;
-    const sql_PDF = 'SELECT * FROM anilox_analysis WHERE id = ?';
-    // const result = await queryDB(sql_PDF, [id]);
+    let { id } = req.body; // Entrada de ID del formulario de subida
+    let anilox_list, anilox_history, anilox_analysis; // Variables para guardar datos de las querys a la DB
+    let nomVol, measuredVol = [], measuredDates = []; // Variables para la estimacion de vida restante
+    let eolGraph, cleanGraph, damagedGraph, wearGraph, bcmGraph; // Variables en las que se guardaran graficos
+    let tapadas_img, danadas_img, desgastadas_img, historial_img, eol_img; // Variables en las que se guardaran graficos convertidos en imagenes
+    // Querys a la DB
+    try {
+      const sql_list = 'SELECT id, brand, type, purchase, nomvol, volume, screen, last, revision FROM anilox_list WHERE id = ?';
+      const result_list = await queryDB(sql_list, [id]);
+      anilox_list = result_list[0];
+      if(anilox_list.purchase) {
+        let date = new Date(anilox_list.purchase);
+        anilox_list.purchase = date.toISOString().split('T')[0];
+      }
+      if(anilox_list.last) {
+        let date = new Date(anilox_list.last);
+        anilox_list.last = date.toISOString().split('T')[0];
+      }
+    } catch (error) {
+      console.log("Error al obtener datos: ", error);
+      return res.status(500).send({status: "Error", message: "Error SQL_List"});
+    }
+    try {
+      const sql_history = 'SELECT anilox, id, date, volume FROM anilox_history WHERE anilox = ?';
+      const result_history = await queryDB(sql_history, [id]);
+      anilox_history = result_history;
+      anilox_history.forEach(row => {
+        if(row.date) {
+          let date = new Date(row.date);
+          row.date = date.toISOString().split('T')[0];
+        }
+      });
+    } catch (error) {
+      console.log("Error al obtener datos: ", error);
+      return res.status(500).send({status: "Error", message: "Error SQL_History"});
+    }
+    try {
+      const sql_analysis = 'SELECT id, next, estado, tapadas, danadas, desgastadas, diagnostico, recomendacion FROM anilox_analysis WHERE id = ?';
+      const result_analysis = await queryDB(sql_analysis, [id]);
+      anilox_analysis = result_analysis[0];
+      if(anilox_analysis.next) {
+        let date = new Date(anilox_analysis.next);
+        anilox_analysis.next = date.toISOString().split('T')[0];
+      }
+    } catch (error) {
+      console.log("Error al obtener datos: ", error);
+      return res.status(500).send({status: "Error", message: "Error SQL_Analysis"});
+    }
+    // Captura de datos para las variables para la estimacion de vida restante
+    nomVol = anilox_list.nomvol;
+    anilox_history.forEach(row=>{
+      measuredVol.push(row.volume);
+      measuredDates.push(row.date);
+    });
+    let [m, b, estimatedVol, estimatedDates, estimatedPercent] = linearRegression(nomVol, measuredVol, measuredDates); // Funcion de estimacion de vida restante
+    // console.log("m: ", m);
+    // console.log("b: ", b);
+    // console.log("Estimated Vol: ", estimatedVol);
+    // console.log('Estimated Dates: ', estimatedDates);
+    // console.log('Estimated Percent', estimatedPercent);
+    if(estimatedVol === 1000 || estimatedVol === 2000) inputPath = path.resolve(__dirname, './modelo_reporte_final_alt.pdf'); // Cambio de ruta al modelo alternativo
+    // // Generar grafico de EOL si se tiene
+    let msg = "";
+    if(estimatedVol === 1000) msg = `El volumen de celda ya se encuentra por debajo del 60% del volumen nominal (${nomVol * 0.6}).`;
+    else if (estimatedVol === 2000) msg = `No se cuenta suficientes datos para realizar una estimación.`;
+    else{
+      const dataEOLGraph = {
+        labels: estimatedDates,
+        datasets: [{
+          type: 'line',
+          label: `Volumen estimado (BCM)`,
+          data: estimatedVol,
+          fill: false,
+          borderColor: 'rgba(255, 0, 0, 0.35)',
+          tension: 0.1,
+          datalabels: {
+            display: true,
+            align: 'top',
+          },
+        }, {
+          type: 'scatter',
+          label: `Volumen medido (BCM)`,
+          data: measuredVol,
+          fill: false,
+          borderColor: 'rgba(0, 0, 255, 0.6)',
+          datalabels: {
+            display: true,
+          },
+        }]
+      };
+      eolGraph = {
+        data: dataEOLGraph,
+        options: {
+          plugins: {
+            legend: {
+              display: true,
+              position: "bottom",
+              labels: {
+                font: {
+                  weight: 500,
+                  size: 14,
+                },
+                padding: 15,
+                boxWidth: 30,
+              },
+              reverse: true,
+            },
+            datalabels:{
+              color: '#363949',
+              align: 'right',
+              padding: {
+                right: 7,
+              },
+              font: {
+                size: 13,
+                weight: 500,
+              },
+              clip: false,
+              formatter: function(value, context){
+                if(context.dataset.type === 'line'){
+                  if(estimatedPercent[1].includes(value) && value < measuredVol[measuredVol.length - 1]) return value;
+                  else return '';
+                }
+              },
+            },
+            tooltip: {
+              enabled: true,
+              titleFont: {
+                size: 16,
+                weight: 600,
+              },
+              bodyFont: {
+                size: 14,
+                weight: 500,
+              },
+              footerFont: {
+                size: 16,
+                weight: 300,
+              },
+              callbacks: {  
+                label: function(context){
+                  let data = context.parsed.y;
+                  return 'Volumen: ' + data + ' ' + ls.getItem("volumeUnit");
+                },
+                footer: function(tooltipItems){
+                  let vol = tooltipItems[0].dataset.data[tooltipItems[0].dataIndex];
+                  if(vol === estimatedPercent[1][0] && estimatedPercent[0][0] > measuredDates.length - 1) return `Volumen de celda aprox. 90% del nominal (${nomVol * 0.9})`
+                  if(vol === estimatedPercent[1][1] && estimatedPercent[0][1] > measuredDates.length - 1) return `Volumen de celda aprox. 80% del nominal (${nomVol * 0.8})`
+                  if(vol === estimatedPercent[1][2] && estimatedPercent[0][2] > measuredDates.length - 1) return `Volumen de celda aprox. 70% del nominal (${nomVol * 0.7})`
+                  if(vol === estimatedPercent[1][3] && estimatedPercent[0][3] > measuredDates.length - 1) return `Volumen de celda aprox. 60% del nominal (${nomVol * 0.6})`
+                }
+              },
+            },
+          },
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              ticks: {
+                display: true,
+                font: {
+                  weight: 500,
+                  size: 14,
+                }
+              },
+            },
+            y: {
+              ticks: {
+                stepSize: 0.1,
+                font: {
+                  weight: 500,
+                  size: 14,
+                }
+              },
+            },
+          },
+        }
+      };
+    }
+    // Generar graficos de tapadas, danadas, desgastadas
+    let tapadas = parseFloat(anilox_analysis.tapadas),
+        limpias = 100 - tapadas,
+        danadas = parseFloat(anilox_analysis.danadas),
+        sinDano = 100 - danadas,
+        desgastadas = parseFloat(anilox_analysis.desgastadas),
+        sinDesgaste = 100 - desgastadas;
+    const dataCleanStat = {
+      labels: [
+        'Limpias',
+        'Tapadas',
+      ],
+      datasets: [{
+        data: [limpias, tapadas],
+        backgroundColor: [
+          'rgba(231,255,23,0.35)',
+          'rgba(255,76,163,0.35)',
+        ],
+        hoverOffset: 4,
+      }],
+    };
+    const dataDamagedStat = {
+      labels: [
+        'Sin Daño',
+        'Dañadas',
+      ],
+      datasets: [{
+        data: [sinDano, danadas],
+        backgroundColor: [
+          'rgba(231,255,23,0.35)',
+          'rgba(255,76,163,0.35)',
+        ],
+        hoverOffset: 4,
+      }]
+    };
+    const dataWearStat = {
+      labels: [
+        'Sin Desgaste',
+        'Desgastadas',
+      ],
+      datasets: [{
+        data: [sinDesgaste, desgastadas],
+        backgroundColor: [
+          'rgba(231,255,23,0.35)',
+          'rgba(255,76,163,0.35)',
+        ],
+        hoverOffset: 4,
+      }]
+    };
+    cleanGraph = {
+      type: "doughnut",
+      data: dataCleanStat,
+      options: {
+        layout: {
+          padding: {
+            left: 20,
+            right: 20,
+          },
+        },
+        plugins: {
+          title: {
+            display: true,
+            align: "center",
+            color: "#363949",
+            font: {
+              weight: 500,
+              size: 22,
+            },
+            padding: {
+              top: 10,
+              bottom: 10,
+            },
+            text: '% Celdas Tapadas'
+          },
+          legend: {
+            display: true,
+            position: "bottom",
+            labels: {
+              font: {
+                weight: 500,
+                size: 14,
+              },
+              padding: 15,
+              boxWidth: 35,
+            },
+            reverse: true,
+          },
+          datalabels:{
+            color: '#363949',
+            anchor: 'center',
+            font: {
+              size: 16,
+              weight: 500,
+            },
+            formatter: function(value){
+              return value + '%';
+            }
+          },
+          tooltip: {
+            enabled: true,
+            titleFont: {
+              size: 16,
+              weight: 600,
+            },
+            bodyFont: {
+              size: 14,
+              weight: 500,
+            },
+            callbacks: {  
+              label: function(context){
+                let data = context.parsed;
 
-    try{
-      const textReplacerCommon = async () => {
+                return ' ' + data + '%';
+              },
+            },
+          },
+        },
+        responsive: true,
+        maintainAspectRatio: false,
+      }
+    };
+    damagedGraph = {
+      type: "doughnut",
+      data: dataDamagedStat,
+      options: {
+        layout: {
+          padding: {
+            left: 20,
+            right: 20,
+          },
+        },
+        plugins: {
+          title: {
+            display: true,
+            align: "center",
+            color: "#363949",
+            font: {
+              weight: 500,
+              size: 22,
+            },
+            padding: {
+              top: 10,
+              bottom: 10,
+            },
+            text: '% Celdas Dañadas'
+          },
+          legend: {
+            display: true,
+            position: "bottom",
+            labels: {
+              font: {
+                weight: 500,
+                size: 14,
+              },
+              padding: 15,
+              boxWidth: 35,
+            },
+            reverse: true,
+          },
+          datalabels:{
+            color: '#363949',
+            anchor: 'center',
+            font: {
+              size: 16,
+              weight: 500,
+            },
+            formatter: function(value){
+              return value + '%';
+            }
+          },
+          tooltip: {
+            enabled: true,
+            titleFont: {
+              size: 16,
+              weight: 600,
+            },
+            bodyFont: {
+              size: 14,
+              weight: 500,
+            },
+            callbacks: {  
+              label: function(context){
+                let data = context.parsed;
+
+                return ' ' + data + '%';
+              },
+            },
+          },
+        },
+        responsive: true,
+        maintainAspectRatio: false,
+      }
+    };
+    wearGraph = {
+      type: "doughnut",
+      data: dataWearStat,
+      options: {
+        layout: {
+          padding: {
+            left: 20,
+            right: 20,
+          },
+        },
+        plugins: {
+          title: {
+            display: true,
+            align: "center",
+            color: "#363949",
+            font: {
+              weight: 500,
+              size: 22,
+            },
+            padding: {
+              top: 10,
+              bottom: 10,
+            },
+            text: '% Celdas Desgastadas'
+          },
+          legend: {
+            display: true,
+            position: "bottom",
+            labels: {
+              font: {
+
+                weight: 500,
+                size: 14,
+              },
+              padding: 15,
+              boxWidth: 35,
+            },
+            reverse: true,
+          },
+          datalabels:{
+            color: '#363949',
+            anchor: 'center',
+            font: {
+              size: 16,
+              weight: 500,
+            },
+            formatter: function(value){
+              return value + '%';
+            }
+          },
+          tooltip: {
+            enabled: true,
+            titleFont: {
+              size: 16,
+              weight: 600,
+            },
+            bodyFont: {
+              size: 14,
+              weight: 500,
+            },
+            callbacks: {  
+              label: function(context){
+                let data = context.parsed;
+                return ' ' + data + '%';
+              },
+            },
+          },
+        },
+        responsive: true,
+        maintainAspectRatio: false,
+      }
+    };
+    // Generar grafico de volumen
+    let nomData = [], volData = [], volLabels = [];
+    anilox_history.forEach(el=>{
+      volData.push(el.volume);
+      volLabels.push(el.date);
+      nomData.push(nomVol);
+    })
+    const dataBcmStat = {
+      labels: volLabels,
+      datasets: [{
+        label: `Volumen medido (BCM)`,
+        data: volData,
+        fill: false,
+        borderColor: 'rgba(0, 0, 255, 0.35)',
+        tension: 0.1,
+      },
+      {
+        label:`Volumen nominal (BCM)`,
+        data: nomData,
+        fill: false,
+        borderColor: 'rgba(255, 0, 0, 0.35)',
+        tension: 0.1,
+        pointStyle: false,
+        datalabels: {
+          display: false, // Desactiva etiquetas
+        },
+      }]
+    };
+    bcmGraph = {
+      type: "line",
+      data: dataBcmStat,
+      options: {
+        plugins: {
+          title: {
+            display: true,
+            align: "center",
+            color: "#363949",
+            font: {
+              weight: 500,
+              size: 22,
+            },
+            padding: {
+              top: 10,
+              bottom: 10,
+            },
+            text: 'Historial de Volumen de Celda'
+          },
+          legend: {
+            display: true,
+            position: "bottom",
+            labels: {
+              font: {
+                weight: 500,
+                size: 14,
+              },
+              padding: 15,
+              boxWidth: 30,
+            },
+            reverse: true,
+          },
+          datalabels:{
+            color: '#363949',
+            align: -45,
+            font: {
+              size: 14,
+              weight: 500,
+            },
+            clip: false,
+          },
+          tooltip: {
+            enabled: true,
+            titleFont: {
+              size: 16,
+              weight: 600,
+            },
+            bodyFont: {
+              size: 14,
+              weight: 500,
+            },
+            footerFont: {
+              size: 16,
+              weight: 300,
+            },
+          },
+        },
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            ticks: {
+              display: true,
+              font: {
+                weight: 500,
+                size: 14,
+              }
+            },
+          },
+          y: {
+            grace: 0.15,
+            ticks: {
+              stepSize: 0.05,
+              font: {
+                weight: 500,
+                size: 14,
+              }
+            },
+          },
+        },
+      }
+    };
+    // Funcion para convertir grafico en imagen
+    const generarGrafico = (grafico)=>{
+      let width, height, buffer, buffer64;
+      if (grafico === bcmGraph) {width = 800; height = 185}
+      else if (grafico === eolGraph) {width = 800; height = 350}
+      else {width = 220; height = 300}
+      const canvas = createCanvas(width, height);
+      const ctx = canvas.getContext('2d');
+      new Chart(ctx, grafico);
+      buffer = canvas.toBuffer('image/png');
+      buffer64 = buffer.toString('base64');
+      return buffer64;
+    }
+    // Convetir todos los graficos en imagen
+    eol_img = generarGrafico(eolGraph).replace('data:image/jpeg;base64,', '');
+    tapadas_img = generarGrafico(cleanGraph).replace('data:image/jpeg;base64,', '');
+    danadas_img = generarGrafico(damagedGraph).replace('data:image/jpeg;base64,', '');
+    desgastadas_img = generarGrafico(wearGraph).replace('data:image/jpeg;base64,', '');
+    historial_img = generarGrafico(bcmGraph).replace('data:image/jpeg;base64,', '');
+    // Reemplazar texto
+    if(inputPath === path.resolve(__dirname, './modelo_reporte_final6.pdf')){ // Reeplazar en el modelo por defecto
+      const textReplacer = async () => {
         try {
           const doc = await PDFNet.PDFDoc.createFromFilePath(inputPath);
           await doc.initSecurityHandler();
           const replacer = await PDFNet.ContentReplacer.create();
           const page1 = await doc.getPage(1);
-      
-          await replacer.addString("ANILOX", id);
-          await replacer.addString("date", last);
-          await replacer.addString("brand", brand);
-          await replacer.addString("type", type);
-          await replacer.addString("purchase", purchase);
-          await replacer.addString("volume", volume);
-          await replacer.addString("screen", screen);
-          await replacer.addString("last", last);
+          const page2 = await doc.getPage(2);
+          await replacer.addString("ANILOX", anilox_list.id);
+          await replacer.addString("date", anilox_list.last);
+          await replacer.addString("brand", anilox_list.brand);
+          await replacer.addString("type", anilox_list.type);
+          await replacer.addString("purchase", anilox_list.purchase);
+          await replacer.addString("volume", anilox_list.volume.toString());
+          await replacer.addString("screen", anilox_list.screen.toString());
+          await replacer.addString("last", anilox_list.last);
+          await replacer.addString("next", anilox_analysis.next);
+          await replacer.addString('tapadas', '');
+          await replacer.addString('danadas', '');
+          await replacer.addString('desgastadas', '');
+          await replacer.addString('historial_volumen', '');
+          await replacer.addString('revision', '');
+          await replacer.addString('grafico_eol', '');
+          await replacer.addString('eol_80', estimatedPercent[1][1].toString());
+          await replacer.addString('eol_70', estimatedPercent[1][2].toString());
+          await replacer.addString('eol_60', estimatedPercent[1][3].toString());
+          await replacer.addString('anio_80', '');
+          await replacer.addString('anio_70', '');
+          await replacer.addString('anio_60', '');
+          await replacer.addString('estado', anilox_analysis.estado.toString());
+          await replacer.addString('diagnostico', anilox_analysis.diagnostico);
+          await replacer.addString('recomendacion', anilox_analysis.recomendacion);
+          await replacer.addString('usuario', sesion_usuario);
+          await replacer.addString('hoy', new Date().toLocaleDateString('es-ES'));
           await replacer.process(page1);
+          await replacer.process(page2);
       
           doc.save(outputPath, PDFNet.SDFDoc.SaveOptions.e_linearized);
         } catch (error) {
@@ -1242,7 +1899,58 @@ async function generarPdf(req, res) {
           res.status(500).send('Error al reemplazar el texto en el PDF');
         }
       }
-      PDFNet.runWithCleanup(textReplacerCommon, "demo:1738013984595:7e94569d0300000000b459c6dd4b66b301ba65c1bbe1d2f4e8c4d1b39d").then(() => {
+      PDFNet.runWithCleanup(textReplacer, "demo:1738013984595:7e94569d0300000000b459c6dd4b66b301ba65c1bbe1d2f4e8c4d1b39d").then(() => {
+        fs.readFile(outputPath, (err, data) => {
+          if(err){
+            res.statusCode = 500;
+            res.end(err);
+          } else {
+            res.setHeader('Content-Type', 'application/pdf');
+            res.end(data);
+          }
+        })
+      }).catch(err => {
+        res.statusCode = 500;
+        res.end(err);
+      })
+    } else if (inputPath === path.resolve(__dirname, './modelo_reporte_final_alt.pdf')){
+      const textReplacer = async () => {
+        try {
+          const doc = await PDFNet.PDFDoc.createFromFilePath(inputPath);
+          await doc.initSecurityHandler();
+          const replacer = await PDFNet.ContentReplacer.create();
+          const page1 = await doc.getPage(1);
+          const page2 = await doc.getPage(2);
+          await replacer.addString("ANILOX", anilox_list.id);
+          await replacer.addString("date", anilox_list.last);
+          await replacer.addString("brand", anilox_list.brand);
+          await replacer.addString("type", anilox_list.type);
+          await replacer.addString("purchase", anilox_list.purchase);
+          await replacer.addString("volume", anilox_list.volume.toString());
+          await replacer.addString("screen", anilox_list.screen.toString());
+          await replacer.addString("last", anilox_list.last);
+          await replacer.addString("next", anilox_analysis.next);
+          await replacer.addString('tapadas', '');
+          await replacer.addString('danadas', '');
+          await replacer.addString('desgastadas', '');
+          await replacer.addString('historial_volumen', '');
+          await replacer.addString('revision', '');
+          await replacer.addString('grafico_eol', msg);
+          await replacer.addString('estado', anilox_analysis.estado.toString());
+          await replacer.addString('diagnostico', anilox_analysis.diagnostico);
+          await replacer.addString('recomendacion', anilox_analysis.recomendacion);
+          await replacer.addString('usuario', sesion_usuario);
+          await replacer.addString('hoy', new Date().toLocaleDateString('es-ES'));
+          await replacer.process(page1);
+          await replacer.process(page2);
+      
+          doc.save(outputPath, PDFNet.SDFDoc.SaveOptions.e_linearized);
+        } catch (error) {
+          console.error('Error al reemplazar el texto en el PDF:', error);
+          res.status(500).send('Error al reemplazar el texto en el PDF');
+        }
+      }
+      PDFNet.runWithCleanup(textReplacer, "demo:1738013984595:7e94569d0300000000b459c6dd4b66b301ba65c1bbe1d2f4e8c4d1b39d").then(() => {
         fs.readFile(outputPath, (err, data) => {
           if(err){
             res.statusCode = 500;
@@ -1257,14 +1965,61 @@ async function generarPdf(req, res) {
         res.end(err);
       })
     }
-    catch (error) {
-      console.log("Error en PDFNet.runWithCleanup: ",error);
-      return res.status(500).send({status: "Error", message: "Error al generar el PDF"});
-    } 
-  } catch {
-    console.log("Error al generar el PDF: ",error);
+  } catch (error) {
+    console.log("Error al generar el PDF: ", error);
     return res.status(500).send({status: "Error", message: "Error al generar el PDF"});
   }
+  // try {
+  //   let { id, last, brand, type, purchase, volume, screen, revision } = req.body;
+  //   const sql_PDF = 'SELECT * FROM anilox_analysis WHERE id = ?';
+
+  //   try{
+  //     const textReplacerCommon = async () => {
+  //       try {
+  //         const doc = await PDFNet.PDFDoc.createFromFilePath(inputPath);
+  //         await doc.initSecurityHandler();
+  //         const replacer = await PDFNet.ContentReplacer.create();
+  //         const page1 = await doc.getPage(1);
+      
+  //         await replacer.addString("ANILOX", id);
+  //         await replacer.addString("date", last);
+  //         await replacer.addString("brand", brand);
+  //         await replacer.addString("type", type);
+  //         await replacer.addString("purchase", purchase);
+  //         await replacer.addString("volume", volume);
+  //         await replacer.addString("screen", screen);
+  //         await replacer.addString("last", last);
+  //         await replacer.process(page1);
+      
+  //         doc.save(outputPath, PDFNet.SDFDoc.SaveOptions.e_linearized);
+  //       } catch (error) {
+  //         console.error('Error al reemplazar el texto en el PDF:', error);
+  //         res.status(500).send('Error al reemplazar el texto en el PDF');
+  //       }
+  //     }
+  //     PDFNet.runWithCleanup(textReplacerCommon, "demo:1738013984595:7e94569d0300000000b459c6dd4b66b301ba65c1bbe1d2f4e8c4d1b39d").then(() => {
+  //       fs.readFile(outputPath, (err, data) => {
+  //         if(err){
+  //           res.statusCode = 500;
+  //           res.end(err);
+  //         } else {
+  //           res.setHeader('Content-Type', 'application/pdf');
+  //           res.end(data);
+  //         }
+  //       })
+  //     }).catch(err => {
+  //       res.statusCode = 500;
+  //       res.end(err);
+  //     })
+  //   }
+  //   catch (error) {
+  //     console.log("Error en PDFNet.runWithCleanup: ",error);
+  //     return res.status(500).send({status: "Error", message: "Error al generar el PDF"});
+  //   } 
+  // } catch {
+  //   console.log("Error al generar el PDF: ",error);
+  //   return res.status(500).send({status: "Error", message: "Error al generar el PDF"});
+  // }
 
   // try {
   //   let { id, revision, last, brand, volume, screen } = req.body;
