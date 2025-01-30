@@ -1,4 +1,5 @@
 /.vscode
+/controllers/output.pdf
 /js/prueba_pdf.js
 /js/chartToCanvasToBase64.js
 /js/modelo_reporte_final_alt.pdf
