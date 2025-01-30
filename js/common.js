@@ -354,9 +354,13 @@ const closeAlertBox = (e)=>{
   if(e.target === $closeAlertBox){
     $modalAlertBox.style.display = "none";
   }
+  if(e.key === "Escape"){
+    $modalAlertBox.style.display = "none";
+  }
 }
 
 d.addEventListener("click", closeAlertBox);
+d.addEventListener("keydown", closeAlertBox);
 
 // Base 64 to Blob
 

@@ -19,7 +19,8 @@ let alreadyExists, saveId, saveBrand, saveType, savePurchase, saveMaster, saveLa
 
 const $modalNewAnilox = d.getElementById("modal-new-anilox"),
       $closeModalNewAnilox = d.getElementById("close-new-anilox"),
-      $formNew = d.querySelector(".form-new");
+      $formNew = d.querySelector(".form-new"),
+      $newSubmit = d.getElementById("new-submit");
 
 const $modalExtraAnilox = d.getElementById("modal-extra-anilox"),
       $closeModalExtraAnilox = d.getElementById("close-extra-anilox"),
@@ -233,6 +234,8 @@ const submit = async(e)=>{
   }
 
   if(e.target === $formNew){  // $formNew carga al ingresar un nuevo anilox: "Ingresar fabricante, fecha de compra, volumen nominal y reporte de fábrica"
+    d.querySelector("body").style.cursor = "wait";
+    $newSubmit.style.cursor = "wait";
     try {      
       const imagen = await toBase64(image); // Recoge la imagen y pdf cargadas en el formulario inicial ($form)
       const pdf = await toBase64(master);
@@ -332,6 +335,9 @@ const submit = async(e)=>{
 
 const recorrido = async(e)=>{ // Página de "Ingrese el recorrido del anilox"
   if(e.target === $extraSkip || e.target === $extraSubmit){ // Se dispara al hacer click en el botón de "Omitir" o "Importar" del modal-extra-anilox
+    d.querySelector("body").style.cursor = "wait";
+    $extraSubmit.style.cursor = "wait";
+    $extraSkip.style.cursor = "wait";
     try {
       const imagen = await toBase64(image); // Solo guarda la imagen del formulario inicial ($form)
       let valRecorrido;
