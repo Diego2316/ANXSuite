@@ -1099,9 +1099,10 @@ async function superHistory(req, res) {
 
 // -----------------Funciones para generar el reporte PDF ------------------------//
 
-async function addBase64ImageToPDF(doc, pSet, base64Image, options) {    
+async function addBase64ImageToPDF(doc, pSet, base64Image, options){    
   const imageBuffer = Buffer.from(base64Image, 'base64'); // Convertir la cadena base64 a buffer 
-  const tempImagePath = path.join(os.tmpdir(), 'tempImage.jpg'); 
+  const tempImagePath = path.resolve(os.tmpdir(), './tempImage.jpg'); 
+
   fs.writeFileSync(tempImagePath, imageBuffer); // Escribir la cadena en un archivo temporal 
 
   const pdfImage = await PDFNet.Image.createFromFile(doc, tempImagePath); // Cargar la imagen desde el archivo temporal
@@ -1279,16 +1280,16 @@ async function generarPdf(req, res) {
     x: 23,     y: 45,
     width: 545, height: 335
   }
-  let inputPath = path.resolve(__dirname, './modelo_reporte_final6.pdf'); // Ruta de modelo por defecto
-  const outputPath = path.resolve(__dirname, './out.pdf'); // Ruta de salida del PDF
+  let inputPath = path.resolve(__dirname, './modelo_reporte.pdf'); // Ruta de modelo por defecto
+  const outputPath = path.resolve(__dirname, './output.pdf'); // Ruta de salida del PDF
   try {
     let { id } = req.body; // Entrada de ID del formulario de subida
     let anilox_list, anilox_history, anilox_analysis; // Variables para guardar datos de las querys a la DB
     let nomVol, measuredVol = [], measuredDates = []; // Variables para la estimacion de vida restante
     let eolGraph, cleanGraph, damagedGraph, wearGraph, bcmGraph; // Variables en las que se guardaran graficos
-    let tapadas_img, danadas_img, desgastadas_img, historial_img, eol_img; // Variables en las que se guardaran graficos convertidos en imagenes
+    let revision_img, tapadas_img, danadas_img, desgastadas_img, historial_img, eol_img; // Variables en las que se guardaran graficos convertidos en imagenes
     // Querys a la DB
-    try {
+    try { // Anilox_List
       const sql_list = 'SELECT id, brand, type, purchase, nomvol, volume, screen, last, revision FROM anilox_list WHERE id = ?';
       const result_list = await queryDB(sql_list, [id]);
       anilox_list = result_list[0];
@@ -1300,11 +1301,14 @@ async function generarPdf(req, res) {
         let date = new Date(anilox_list.last);
         anilox_list.last = date.toISOString().split('T')[0];
       }
+      if(anilox_list.revision){
+        revision_img = anilox_list.revision.replace('data:image/jpeg;base64,', '');
+      }
     } catch (error) {
       console.log("Error al obtener datos: ", error);
       return res.status(500).send({status: "Error", message: "Error SQL_List"});
     }
-    try {
+    try { // Anilox_History
       const sql_history = 'SELECT anilox, id, date, volume FROM anilox_history WHERE anilox = ?';
       const result_history = await queryDB(sql_history, [id]);
       anilox_history = result_history;
@@ -1318,7 +1322,7 @@ async function generarPdf(req, res) {
       console.log("Error al obtener datos: ", error);
       return res.status(500).send({status: "Error", message: "Error SQL_History"});
     }
-    try {
+    try { // Anilox_Analysis
       const sql_analysis = 'SELECT id, next, estado, tapadas, danadas, desgastadas, diagnostico, recomendacion FROM anilox_analysis WHERE id = ?';
       const result_analysis = await queryDB(sql_analysis, [id]);
       anilox_analysis = result_analysis[0];
@@ -1330,6 +1334,7 @@ async function generarPdf(req, res) {
       console.log("Error al obtener datos: ", error);
       return res.status(500).send({status: "Error", message: "Error SQL_Analysis"});
     }
+    console.log(anilox_list.revision);
     // Captura de datos para las variables para la estimacion de vida restante
     nomVol = anilox_list.nomvol;
     anilox_history.forEach(row=>{
@@ -1342,7 +1347,7 @@ async function generarPdf(req, res) {
     // console.log("Estimated Vol: ", estimatedVol);
     // console.log('Estimated Dates: ', estimatedDates);
     // console.log('Estimated Percent', estimatedPercent);
-    if(estimatedVol === 1000 || estimatedVol === 2000) inputPath = path.resolve(__dirname, './modelo_reporte_final_alt.pdf'); // Cambio de ruta al modelo alternativo
+    if(estimatedVol === 1000 || estimatedVol === 2000) inputPath = path.resolve(__dirname, './modelo_reporte_alt.pdf'); // Cambio de ruta al modelo alternativo
     // // Generar grafico de EOL si se tiene
     let msg = "";
     if(estimatedVol === 1000) msg = `El volumen de celda ya se encuentra por debajo del 60% del volumen nominal (${nomVol * 0.6}).`;
@@ -1856,170 +1861,95 @@ async function generarPdf(req, res) {
     desgastadas_img = generarGrafico(wearGraph).replace('data:image/jpeg;base64,', '');
     historial_img = generarGrafico(bcmGraph).replace('data:image/jpeg;base64,', '');
     // Reemplazar texto
-    if(inputPath === path.resolve(__dirname, './modelo_reporte_final6.pdf')){ // Reeplazar en el modelo por defecto
-      const textReplacer = async () => {
-        try {
-          const doc = await PDFNet.PDFDoc.createFromFilePath(inputPath);
-          await doc.initSecurityHandler();
-          const replacer = await PDFNet.ContentReplacer.create();
-          const page1 = await doc.getPage(1);
-          const page2 = await doc.getPage(2);
-          await replacer.addString("ANILOX", anilox_list.id);
-          await replacer.addString("date", anilox_list.last);
-          await replacer.addString("brand", anilox_list.brand);
-          await replacer.addString("type", anilox_list.type);
-          await replacer.addString("purchase", anilox_list.purchase);
-          await replacer.addString("volume", anilox_list.volume.toString());
-          await replacer.addString("screen", anilox_list.screen.toString());
-          await replacer.addString("last", anilox_list.last);
-          await replacer.addString("next", anilox_analysis.next);
-          await replacer.addString('tapadas', '');
-          await replacer.addString('danadas', '');
-          await replacer.addString('desgastadas', '');
-          await replacer.addString('historial_volumen', '');
-          await replacer.addString('revision', '');
+    const replacer = async () => {
+      try {
+        const doc = await PDFNet.PDFDoc.createFromFilePath(inputPath);
+        await doc.initSecurityHandler();
+        const replacer = await PDFNet.ContentReplacer.create();
+        const page1 = await doc.getPage(1);
+        const page2 = await doc.getPage(2);
+        const pageSet1 = await PDFNet.PageSet.createRange(1, 1);
+        const pageSet2 = await PDFNet.PageSet.createRange(2, 2);
+        await replacer.addString("ANILOX", anilox_list.id);
+        await replacer.addString("date", anilox_list.last);
+        await replacer.addString("brand", anilox_list.brand);
+        await replacer.addString("type", anilox_list.type);
+        await replacer.addString("purchase", anilox_list.purchase);
+        await replacer.addString("volume", anilox_list.volume.toString());
+        await replacer.addString("screen", anilox_list.screen.toString());
+        await replacer.addString("last", anilox_list.last);
+        await replacer.addString("next", anilox_analysis.next);
+        await replacer.addString('tapadas', '');
+        await replacer.addString('danadas', '');
+        await replacer.addString('desgastadas', '');
+        await replacer.addString('historial_volumen', '');
+        await replacer.addString('revision', '');
+        await addBase64ImageToPDF(doc, pageSet1, revision_img, coord_revision);
+        await addBase64ImageToPDF(doc, pageSet1, tapadas_img, coord_tapadas);
+        await addBase64ImageToPDF(doc, pageSet1, danadas_img, coord_danadas);
+        await addBase64ImageToPDF(doc, pageSet1, desgastadas_img, coord_desgastadas);
+        await addBase64ImageToPDF(doc, pageSet1, historial_img, coord_historial);
+        if(inputPath === path.resolve(__dirname, './modelo_reporte.pdf')){
           await replacer.addString('grafico_eol', '');
-          await replacer.addString('eol_80', estimatedPercent[1][1].toString());
-          await replacer.addString('eol_70', estimatedPercent[1][2].toString());
+          if ((estimatedPercent[0][0] - measuredDates.length + 1) <= 0){
+            await replacer.addString('eol_90', 'N/A');
+            await replacer.addString('anio_90', 'N/A');
+          } else {
+            await replacer.addString('eol_90', estimatedPercent[1][0].toString());
+            await replacer.addString('anio_90', `${((estimatedPercent[0][0] - measuredDates.length + 1) / 2).toString()} años`);
+          }
+          if ((estimatedPercent[0][1] - measuredDates.length + 1) <= 0){
+            await replacer.addString('eol_80', 'N/A');
+            await replacer.addString('anio_80', 'N/A');
+          } else {
+            await replacer.addString('eol_80', estimatedPercent[1][1].toString());
+            await replacer.addString('anio_80', `${((estimatedPercent[0][1] - measuredDates.length + 1) / 2).toString()} años`);
+          }
+          if ((estimatedPercent[0][2] - measuredDates.length + 1) <= 0){
+            await replacer.addString('eol_70', 'N/A');
+            await replacer.addString('anio_70', 'N/A');
+          } else {
+            await replacer.addString('eol_70', estimatedPercent[1][2].toString());
+            await replacer.addString('anio_70', `${((estimatedPercent[0][2] - measuredDates.length + 1) / 2).toString()} años`);
+          }
           await replacer.addString('eol_60', estimatedPercent[1][3].toString());
-          await replacer.addString('anio_80', '');
-          await replacer.addString('anio_70', '');
-          await replacer.addString('anio_60', '');
-          await replacer.addString('estado', anilox_analysis.estado.toString());
-          await replacer.addString('diagnostico', anilox_analysis.diagnostico);
-          await replacer.addString('recomendacion', anilox_analysis.recomendacion);
-          await replacer.addString('usuario', sesion_usuario);
-          await replacer.addString('hoy', new Date().toLocaleDateString('es-ES'));
-          await replacer.process(page1);
-          await replacer.process(page2);
-      
-          doc.save(outputPath, PDFNet.SDFDoc.SaveOptions.e_linearized);
-        } catch (error) {
-          console.error('Error al reemplazar el texto en el PDF:', error);
-          res.status(500).send('Error al reemplazar el texto en el PDF');
-        }
-      }
-      PDFNet.runWithCleanup(textReplacer, "demo:1738013984595:7e94569d0300000000b459c6dd4b66b301ba65c1bbe1d2f4e8c4d1b39d").then(() => {
-        fs.readFile(outputPath, (err, data) => {
-          if(err){
-            res.statusCode = 500;
-            res.end(err);
-          } else {
-            res.setHeader('Content-Type', 'application/pdf');
-            res.end(data);
-          }
-        })
-      }).catch(err => {
-        res.statusCode = 500;
-        res.end(err);
-      })
-    } else if (inputPath === path.resolve(__dirname, './modelo_reporte_final_alt.pdf')){
-      const textReplacer = async () => {
-        try {
-          const doc = await PDFNet.PDFDoc.createFromFilePath(inputPath);
-          await doc.initSecurityHandler();
-          const replacer = await PDFNet.ContentReplacer.create();
-          const page1 = await doc.getPage(1);
-          const page2 = await doc.getPage(2);
-          await replacer.addString("ANILOX", anilox_list.id);
-          await replacer.addString("date", anilox_list.last);
-          await replacer.addString("brand", anilox_list.brand);
-          await replacer.addString("type", anilox_list.type);
-          await replacer.addString("purchase", anilox_list.purchase);
-          await replacer.addString("volume", anilox_list.volume.toString());
-          await replacer.addString("screen", anilox_list.screen.toString());
-          await replacer.addString("last", anilox_list.last);
-          await replacer.addString("next", anilox_analysis.next);
-          await replacer.addString('tapadas', '');
-          await replacer.addString('danadas', '');
-          await replacer.addString('desgastadas', '');
-          await replacer.addString('historial_volumen', '');
-          await replacer.addString('revision', '');
+          await replacer.addString('anio_60', `${((estimatedPercent[0][3] - measuredDates.length + 1) / 2).toString()} años`);
+          await addBase64ImageToPDF(doc, pageSet2, eol_img, coord_graficaEOL);
+        } else if (inputPath === path.resolve(__dirname, './modelo_reporte_alt.pdf')){
           await replacer.addString('grafico_eol', msg);
-          await replacer.addString('estado', anilox_analysis.estado.toString());
-          await replacer.addString('diagnostico', anilox_analysis.diagnostico);
-          await replacer.addString('recomendacion', anilox_analysis.recomendacion);
-          await replacer.addString('usuario', sesion_usuario);
-          await replacer.addString('hoy', new Date().toLocaleDateString('es-ES'));
-          await replacer.process(page1);
-          await replacer.process(page2);
-      
-          doc.save(outputPath, PDFNet.SDFDoc.SaveOptions.e_linearized);
-        } catch (error) {
-          console.error('Error al reemplazar el texto en el PDF:', error);
-          res.status(500).send('Error al reemplazar el texto en el PDF');
         }
+        await replacer.addString('estado_estructural', anilox_analysis.estado.toString());
+        await replacer.addString('estado_transferencia', (Math.round((((anilox_list.volume / nomVol) * 100) + Number.EPSILON) * 10) / 10).toString());
+        await replacer.addString('diagnostico', anilox_analysis.diagnostico);
+        await replacer.addString('recomendacion', anilox_analysis.recomendacion);
+        await replacer.addString('usuario', sesion_usuario);
+        await replacer.addString('hoy', new Date().toLocaleDateString('es-ES'));
+        await replacer.process(page1);
+        await replacer.process(page2);
+        await doc.save(outputPath, PDFNet.SDFDoc.SaveOptions.e_linearized);
+      } catch (error) {
+        console.error('Error al reemplazar el texto en el PDF:', error);
+        res.status(500).send('Error al reemplazar el texto en el PDF');
       }
-      PDFNet.runWithCleanup(textReplacer, "demo:1738013984595:7e94569d0300000000b459c6dd4b66b301ba65c1bbe1d2f4e8c4d1b39d").then(() => {
-        fs.readFile(outputPath, (err, data) => {
-          if(err){
-            res.statusCode = 500;
-            res.end(err);
-          } else {
-            res.setHeader('Content-Type', 'application/pdf');
-            res.end(data);
-          }
-        })
-      }).catch(err => {
-        res.statusCode = 500;
-        res.end(err);
-      })
     }
+    PDFNet.runWithCleanup(replacer, "demo:1738013984595:7e94569d0300000000b459c6dd4b66b301ba65c1bbe1d2f4e8c4d1b39d").then(() => {
+      fs.readFile(outputPath, (err, data) => {
+        if(err){
+          res.statusCode = 500;
+          res.end(err);
+        } else {
+          res.setHeader('Content-Type', 'application/pdf');
+          res.end(data);
+        }
+      })
+    }).catch(err => {
+      res.statusCode = 500;
+      res.end(err);
+    })
   } catch (error) {
     console.log("Error al generar el PDF: ", error);
     return res.status(500).send({status: "Error", message: "Error al generar el PDF"});
   }
-  // try {
-  //   let { id, last, brand, type, purchase, volume, screen, revision } = req.body;
-  //   const sql_PDF = 'SELECT * FROM anilox_analysis WHERE id = ?';
-
-  //   try{
-  //     const textReplacerCommon = async () => {
-  //       try {
-  //         const doc = await PDFNet.PDFDoc.createFromFilePath(inputPath);
-  //         await doc.initSecurityHandler();
-  //         const replacer = await PDFNet.ContentReplacer.create();
-  //         const page1 = await doc.getPage(1);
-      
-  //         await replacer.addString("ANILOX", id);
-  //         await replacer.addString("date", last);
-  //         await replacer.addString("brand", brand);
-  //         await replacer.addString("type", type);
-  //         await replacer.addString("purchase", purchase);
-  //         await replacer.addString("volume", volume);
-  //         await replacer.addString("screen", screen);
-  //         await replacer.addString("last", last);
-  //         await replacer.process(page1);
-      
-  //         doc.save(outputPath, PDFNet.SDFDoc.SaveOptions.e_linearized);
-  //       } catch (error) {
-  //         console.error('Error al reemplazar el texto en el PDF:', error);
-  //         res.status(500).send('Error al reemplazar el texto en el PDF');
-  //       }
-  //     }
-  //     PDFNet.runWithCleanup(textReplacerCommon, "demo:1738013984595:7e94569d0300000000b459c6dd4b66b301ba65c1bbe1d2f4e8c4d1b39d").then(() => {
-  //       fs.readFile(outputPath, (err, data) => {
-  //         if(err){
-  //           res.statusCode = 500;
-  //           res.end(err);
-  //         } else {
-  //           res.setHeader('Content-Type', 'application/pdf');
-  //           res.end(data);
-  //         }
-  //       })
-  //     }).catch(err => {
-  //       res.statusCode = 500;
-  //       res.end(err);
-  //     })
-  //   }
-  //   catch (error) {
-  //     console.log("Error en PDFNet.runWithCleanup: ",error);
-  //     return res.status(500).send({status: "Error", message: "Error al generar el PDF"});
-  //   } 
-  // } catch {
-  //   console.log("Error al generar el PDF: ",error);
-  //   return res.status(500).send({status: "Error", message: "Error al generar el PDF"});
-  // }
 
   // try {
   //   let { id, revision, last, brand, volume, screen } = req.body;
