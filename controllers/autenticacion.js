@@ -606,7 +606,7 @@ async function tablaAniloxList(req, res) {
               if (errC) throw errC;
               let aux = resultC.length > 0 ? resultC.length + 1 : 1; // Si ya existe se suma 1 al id máximo, caso contrario id se inicia en 1
               const sqlInsertHistory = 'INSERT INTO anilox_history (anilox, id, date, volume, diagnostico, report, empresa) VALUES (?,?,?,?,?,?,?)'
-              db.query(sqlInsertHistory, [id, aux, last, volume, diagnostico, "https://pdfobject.com/pdf/sample.pdf", sesion_empresa], (errD, resultD) => {
+              db.query(sqlInsertHistory, [id, aux, last, volume, diagnostico, "", sesion_empresa], (errD, resultD) => {
                 if (errD) throw errD;                
                 return res.status(200).send({ status: "Success", message: "Anilox actualizado correctamente" });
               });
@@ -799,8 +799,7 @@ async function cotizaciones(req, res) {
         });
         let mailOptions = {
           from: 'anxsuite@gmail.com',
-          // to: 'mario.molina@qanders.com; enzo.carpio@qanders.com; rodrigo.ma@qanders.com',
-          to: 'diego.sanchez@qanders.com',
+          to: 'mario.molina@qanders.com; enzo.carpio@qanders.com; rodrigo.ma@qanders.com',
           subject: 'ANX Suite - Solicitud de cotización de rodillos ' + sesion_empresa,
           html: 'El cliente ' + sesion_empresa + ' ha solicitado una cotización de ' + '1' + ' rodillos anilox.<br>' + 
                 'Las características del rodillo son:<br><br>' +
@@ -840,8 +839,7 @@ async function cotizaciones(req, res) {
 
         let mailOptions = {
           from: 'anxsuite@gmail.com',
-          // to: 'mario.molina@qanders.com; enzo.carpio@qanders.com; rodrigo.ma@qanders.com',
-          to: 'diego.sanchez@qanders.com',
+          to: 'mario.molina@qanders.com; enzo.carpio@qanders.com; rodrigo.ma@qanders.com',
           subject: 'ANX Suite - Solicitud de cotización de rodillos - ' + sesion_empresa,
           html: string2
         }
@@ -1119,64 +1117,6 @@ async function addBase64ImageToPDF(doc, pSet, base64Image, options){
   fs.unlinkSync(tempImagePath); // Opcional: Eliminar el archivo temporal de la imagen 
 }
 
-// function encontrarValoresCercanosMenores(arr, objetivos) {
-//   return objetivos.map(objetivo => {
-//     return arr.reduce((prev, curr) => {
-//       if (curr <= objetivo && (prev >= objetivo || Math.abs(curr - objetivo) < Math.abs(prev - objetivo))) {
-//         return curr;
-//       }
-//       return prev;
-//     }, Number.MAX_VALUE);
-//   });
-// }
-
-// function generarRectaTendencia(eolDates, volData, limite) {
-//   // Convertir fechas a valores numéricos (timestamp)
-//   const x = eolDates.map(date => new Date(date).getTime());
-//   const y = volData;
-
-//   const n = x.length;
-//   const sumX = x.reduce((a, b) => a + b, 0);
-//   const sumY = y.reduce((a, b) => a + b, 0);
-//   const sumXY = x.reduce((sum, xi, i) => sum + xi * y[i], 0);
-//   const sumXX = x.reduce((sum, xi) => sum + xi * xi, 0);
-
-//   const m = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
-//   const b = (sumY - m * sumX) / n;
-
-//   // Calcular los puntos de la recta de tendencia en las fechas originales
-//   const tendencia = x.map(xi => ({
-//     x: new Date(xi).toISOString().split('T')[0], // Convertir de nuevo a formato de fecha
-//     y: m * xi + b
-//   }));
-
-//   // Generar puntos en fechas futuras hasta que el valor sea menor o igual al límite
-//   let ultimaFecha = new Date(eolDates[eolDates.length - 1]);
-//   let ultimoValor = tendencia[tendencia.length - 1].y;
-//   let b2 = b > 200 ? 2 : b > 100 ? 3 : 6; // Si b es mayor a 200 elabora una pendiente de 2 meses, si es mayor a 100 de 3 meses, de lo contrario de 6 meses
-
-//   if(m < -0.000000000005 ){
-//     while (ultimoValor > limite) {
-//       ultimaFecha.setMonth(ultimaFecha.getMonth() + b2); // Incrementar la fecha en 6 meses o 3 meses dependiendo de la intersección
-//       const nuevaFecha = ultimaFecha.getTime();
-//       ultimoValor = m * nuevaFecha + b;
-//       tendencia.push({
-//         x: ultimaFecha.toISOString().split('T')[0],
-//         y: ultimoValor
-//       });
-//     }
-//   }
-
-//   return { tendencia, m, b };
-// }
-
-// function encontrarPosiciones(arr, valoresCercanos) {
-//   return valoresCercanos.map(valorCercano => {
-//     const index = arr.indexOf(valorCercano);
-//     return index !== -1 ? index + 1 : -1; // Sumar 1 para que la posición sea 1-indexada
-//   });
-// }
-
 const dateEstimation = (measuredVol, measuredDates, estimatedVol)=>{
   let estimatedDates = measuredDates.map(el => el);
   for(let i = 0; i < estimatedVol.length - measuredVol.length; i++){
@@ -1257,23 +1197,23 @@ const linearRegression = (nomVol, measuredVol, measuredDates)=>{
 async function generarPdf(req, res) {  
   // Coordenadas y tamaños de imagenes de graficos
   const coord_revision = {
-    x: 215,     y: 688,     
+    x: 215,     y: 680,     
     width: 205, height: 120 
   };
   const coord_tapadas = {
-    x: 45,     y: 320,
+    x: 45,     y: 305,
     width: 160, height: 193
   };
   const coord_danadas = {
-    x: 225,     y: 320,
+    x: 225,     y: 305,
     width: 160, height: 193
   };
   const coord_desgastadas = {
-    x: 405,     y: 320,
+    x: 405,     y: 305,
     width: 165, height: 193
   };
   const coord_historial = {
-    x: 23,     y: 532,
+    x: 23,     y: 520,
     width: 555, height: 185
   };
   const coord_graficaEOL = {
@@ -1334,7 +1274,6 @@ async function generarPdf(req, res) {
       console.log("Error al obtener datos: ", error);
       return res.status(500).send({status: "Error", message: "Error SQL_Analysis"});
     }
-    console.log(anilox_list.revision);
     // Captura de datos para las variables para la estimacion de vida restante
     nomVol = anilox_list.nomvol;
     anilox_history.forEach(row=>{
@@ -1918,8 +1857,8 @@ async function generarPdf(req, res) {
         } else if (inputPath === path.resolve(__dirname, './modelo_reporte_alt.pdf')){
           await replacer.addString('grafico_eol', msg);
         }
-        await replacer.addString('estado_estructural', anilox_analysis.estado.toString());
-        await replacer.addString('estado_transferencia', (Math.round((((anilox_list.volume / nomVol) * 100) + Number.EPSILON) * 10) / 10).toString());
+        await replacer.addString('estado_estructural', `${anilox_analysis.estado.toString()}%`);
+        await replacer.addString('estado_transferencia', `${(Math.round((((anilox_list.volume / nomVol) * 100) + Number.EPSILON) * 10) / 10).toString()}%`);
         await replacer.addString('diagnostico', anilox_analysis.diagnostico);
         await replacer.addString('recomendacion', anilox_analysis.recomendacion);
         await replacer.addString('usuario', sesion_usuario);
@@ -1927,9 +1866,25 @@ async function generarPdf(req, res) {
         await replacer.process(page1);
         await replacer.process(page2);
         await doc.save(outputPath, PDFNet.SDFDoc.SaveOptions.e_linearized);
+        fs.readFile(outputPath, (err_f, data) => {
+          if(err_f){
+            console.log("Error al leer el archivo PDF: ", err_f);
+            return res.status(500).send("Error al procesar el archivo PDF");
+          }
+          const base64PDF = `data:application/pdf;base64,${data.toString('base64')}`;
+          const sql_pdf1 = 'SELECT anilox, id, date FROM anilox_history WHERE anilox = ?';
+          db.query(sql_pdf1, [id], (err_g, rows_g) => {
+            if(rows_g.length > 0){
+              const sql_pdf2 = `UPDATE anilox_history SET report = ? where anilox = ? AND id = ?`;
+              db.query(sql_pdf2, [base64PDF, id, rows_g.length], (err_h, rows_H) => {
+                console.log("PDF convertido a base64 y almacenado con exito en la DB");
+              });
+            }
+          });
+        });
       } catch (error) {
-        console.error('Error al reemplazar el texto en el PDF:', error);
-        res.status(500).send('Error al reemplazar el texto en el PDF');
+        console.error('Error al generar el PDF:', error);
+        res.status(500).send('Error al generar el PDF');
       }
     }
     PDFNet.runWithCleanup(replacer, "demo:1738013984595:7e94569d0300000000b459c6dd4b66b301ba65c1bbe1d2f4e8c4d1b39d").then(() => {
@@ -1941,753 +1896,17 @@ async function generarPdf(req, res) {
           res.setHeader('Content-Type', 'application/pdf');
           res.end(data);
         }
-      })
+      });
     }).catch(err => {
       res.statusCode = 500;
       res.end(err);
-    })
+    });
   } catch (error) {
     console.log("Error al generar el PDF: ", error);
     return res.status(500).send({status: "Error", message: "Error al generar el PDF"});
   }
-
-  // try {
-  //   let { id, revision, last, brand, volume, screen } = req.body;
-  //   let tapadas, limpias, danadas, sinDano, desgastadas, sinDesgaste, tapadas_img, danadas_img, desgastadas_img, bcmChart, eolGraph, tipo, purchase, msg;
-  //   let volLabels = [], volData = [], diag = [], eolDates = [], nomData =[], actualDates=[], percentVol=[], percentDates=[], ultimaFecha, diferenciasEnAnios;
-  //   let sql_PDF = 'SELECT * FROM anilox_analysis WHERE id = ?'
-  //   db.query(sql_PDF, [id], (err, rows) => {
-  //       if (err) throw err;
-  //       tapadas = parseFloat(rows[0].tapadas),
-  //       danadas = parseFloat(rows[0].danadas),
-  //       desgastadas = parseFloat(rows[0].desgastadas),      
-  //       limpias = 100 - tapadas,
-  //       sinDano = 100 - danadas,
-  //       sinDesgaste = 100 - desgastadas;
-  //       let next = new Date(rows[0].next);
-  //       next = next.toISOString().split('T')[0];
-  //       let estado = parseFloat(rows[0].estado) + '%';
-  //       let diagnostico = rows[0].diagnostico;
-  //       let recomendacion = rows[0].recomendacion;
-  //       let eolData = JSON.parse(rows[0].eol);
-
-  //       dataCleanStat = {
-  //           labels: [
-  //               'Limpias',
-  //               'Tapadas',
-  //           ],
-  //           datasets: [{
-  //               data: [limpias, tapadas],
-  //               backgroundColor: [
-  //               'rgba(231,255,23,0.35)',
-  //               'rgba(255,76,163,0.35)',
-  //               ],
-  //               hoverOffset: 4,
-  //           }],
-  //       };
-        
-  //       dataDamagedStat = {
-  //           labels: [
-  //               'Sin Daño',
-  //               'Dañadas',
-  //           ],
-  //           datasets: [{
-  //               data: [sinDano, danadas],
-  //               backgroundColor: [
-  //               'rgba(231,255,23,0.35)',
-  //               'rgba(255,76,163,0.35)',
-  //               ],
-  //               hoverOffset: 4,
-  //           }]
-  //       };
-        
-  //       dataWearStat = {
-  //           labels: [
-  //               'Sin Desgaste',
-  //               'Desgastadas',
-  //           ],
-  //           datasets: [{
-  //               data: [sinDesgaste, desgastadas],
-  //               backgroundColor: [
-  //               'rgba(231,255,23,0.35)',
-  //               'rgba(255,76,163,0.35)',
-  //               ],
-  //               hoverOffset: 4,
-  //           }]
-  //       };
-        
-  //       cleanGraphConfig = {
-  //           type: "doughnut",
-  //           data: dataCleanStat,
-  //           options: {
-  //               layout: {
-  //                   padding: {
-  //                       left: 20,
-  //                       right: 20,
-  //                   },
-  //               },
-  //               plugins: {
-  //                   title: {
-  //                       display: true,
-  //                       align: "center",
-  //                       color: "#363949",
-  //                       font: {
-  //                           weight: 550,
-  //                           size: 20,
-  //                       },
-  //                       padding: {
-  //                           top: 10,
-  //                           bottom: 10,
-  //                       },
-  //                       text: '% Celdas Tapadas'
-  //                   },
-  //                   legend: {
-  //                       display: true,
-  //                       position: "bottom",
-  //                       labels: {
-  //                           font: {
-  //                               weight: 550,
-  //                               size: 14,
-  //                           },
-  //                           padding: 15,
-  //                           boxWidth: 35,
-  //                       },
-  //                       reverse: true,
-  //                   },
-  //                   datalabels:{
-  //                       color: '#363949',
-  //                       anchor: 'center',
-  //                       font: {
-  //                           size: 16,
-  //                           weight: 550,
-  //                       },
-  //                       formatter: function(value){
-  //                           return value + '%';
-  //                       }
-  //                   },
-  //                   tooltip: {
-  //                       enabled: true,
-  //                       titleFont: {
-  //                           size: 16,
-  //                           weight: 550,
-  //                       },
-  //                       bodyFont: {
-  //                           size: 14,
-  //                           weight: 550,
-  //                       },
-  //                       callbacks: {  
-  //                           label: function(context){
-  //                               let data = context.parsed;    
-  //                               return ' ' + data + '%';
-  //                           },
-  //                       },
-  //                   },
-  //               },
-  //               responsive: true,
-  //               maintainAspectRatio: false,
-  //           }
-  //       };
-        
-  //       damagedGraphConfig = {
-  //           type: "doughnut",
-  //           data: dataDamagedStat,
-  //           options: {
-  //               layout: {
-  //                   padding: {
-  //                       left: 20,
-  //                       right: 20,
-  //                   },
-  //               },
-  //               plugins: {
-  //                   title: {
-  //                       display: true,
-  //                       align: "center",
-  //                       color: "#363949",
-  //                       font: {
-  //                           weight: 550,
-  //                           size: 20,
-  //                       },
-  //                       padding: {
-  //                           top: 10,
-  //                           bottom: 10,
-  //                       },
-  //                       text: '% Celdas Dañadas'
-  //                   },
-  //                   legend: {
-  //                       display: true,
-  //                       position: "bottom",
-  //                       labels: {
-  //                           font: {
-  //                               weight: 550,
-  //                               size: 14,
-  //                           },
-  //                           padding: 15,
-  //                           boxWidth: 35,
-  //                       },
-  //                       reverse: true,
-  //                   },
-  //                   datalabels:{
-  //                       color: '#363949',
-  //                       anchor: 'center',
-  //                       font: {
-  //                           size: 16,
-  //                           weight: 550,
-  //                       },
-  //                       formatter: function(value){
-  //                           return value + '%';
-  //                       }
-  //                   },
-  //                   tooltip: {
-  //                       enabled: true,
-  //                       titleFont: {
-  //                           size: 16,
-  //                           weight: 550,
-  //                       },
-  //                       bodyFont: {
-  //                           size: 14,
-  //                           weight: 550,
-  //                       },
-  //                       callbacks: {  
-  //                           label: function(context){
-  //                               let data = context.parsed;            
-  //                               return ' ' + data + '%';
-  //                           },
-  //                       },
-  //                   },
-  //               },
-  //               responsive: true,
-  //               maintainAspectRatio: false,
-  //           }
-  //       };
-        
-  //       wearGraphConfig = {
-  //           type: "doughnut",
-  //           data: dataWearStat,
-  //           options: {
-  //               layout: {
-  //               padding: {
-  //                   left: 20,
-  //                   right: 20,
-  //               },
-  //               },
-  //               plugins: {
-  //                   title: {
-  //                       display: true,
-  //                       align: "center",
-  //                       color: "#363949",
-  //                       font: {
-  //                           weight: 700,
-  //                           size: 20,
-  //                       },
-  //                       padding: {
-  //                           top: 10,
-  //                           bottom: 10,
-  //                       },
-  //                       text: '% Celdas Desgastadas'
-  //                   },
-  //                   legend: {
-  //                       display: true,
-  //                       position: "bottom",
-  //                       labels: {
-  //                           font: {            
-  //                               weight: 550,
-  //                               size: 14,
-  //                           },
-  //                           padding: 15,
-  //                           boxWidth: 35,
-  //                       },
-  //                       reverse: true,
-  //                   },
-  //                   datalabels:{
-  //                       color: '#363949',
-  //                       anchor: 'center',
-  //                       font: {
-  //                           size: 16,
-  //                           weight: 550,
-  //                       },
-  //                       formatter: function(value){
-  //                           return value + '%';
-  //                       }
-  //                   },
-  //                   tooltip: {
-  //                       enabled: true,
-  //                       titleFont: {
-  //                           size: 16,
-  //                           weight: 550,
-  //                       },
-  //                       bodyFont: {
-  //                           size: 14,
-  //                           weight: 550,
-  //                       },
-  //                       callbacks: {  
-  //                           label: function(context){
-  //                               let data = context.parsed;
-  //                               return ' ' + data + '%';
-  //                           },
-  //                       },
-  //                   },
-  //               },
-  //               responsive: true,
-  //               maintainAspectRatio: false,
-  //           }
-  //       };
-        
-  //       function generarGrafico(grafico) {
-  //           let buffer, buffer64;
-  //           if (grafico == bcmChart) {
-  //               buffer = canvas_bcm.toBuffer('image/png');
-  //           }
-  //           else if (grafico == eolGraph) {
-  //               buffer = canvas_EOL.toBuffer('image/png');
-  //           }
-  //           else {
-  //               let width = 220, height = 300;  
-  //               const canvas_PDF = createCanvas(width, height);
-  //               const ctx = canvas_PDF.getContext('2d');                    
-  //               new Chart(ctx, grafico); 
-  //               buffer = canvas_PDF.toBuffer('image/png'); 
-  //           }
-  //           buffer64 = buffer.toString('base64');
-  //           return buffer64;
-  //       }
-
-  //       tapadas_img = generarGrafico(cleanGraphConfig).replace('data:image/jpeg;base64,', '');
-  //       danadas_img = generarGrafico(damagedGraphConfig).replace('data:image/jpeg;base64,', '');
-  //       desgastadas_img = generarGrafico(wearGraphConfig).replace('data:image/jpeg;base64,', '');  
-
-  //       const sql2_PDF = 'SELECT * FROM anilox_list WHERE id=?';
-  //       db.query(sql2_PDF,[id], (err2, rows2) => {
-  //           if (err2) throw err2;
-  //           revision = rows2[0].revision;
-  //           revision = revision.replace('data:image/jpeg;base64,', '');
-  //           purchase = rows2[0].purchase.toISOString().substring(0, 10);
-  //           tipo = rows2[0].type;
-  //           let nomVol = rows2[0].nomvol;
-  //           const sql3_PDF = 'SELECT * FROM anilox_history WHERE anilox=?';
-  //           db.query(sql3_PDF,[id], (err3, rows3) => {
-  //               if (err3) throw err3;
-  //               for(let i = 0; i < rows3.length; i++){
-  //                   let date = new Date(rows3[i].date);
-  //                   volLabels[i] = date.toISOString().split('T')[0];
-  //                   volData[i] = Math.round(((rows3[i].volume)/1.55) * 10) / 10; 
-  //                   diag[i] = rows3[i].diagnostico;
-  //                   nomData[i] = Math.round((nomVol/1.55) * 10) / 10;
-  //                   rows3.forEach(row => {
-  //                     if(row.date) {
-  //                       let date = new Date(row.date);
-  //                       row.date = date.toISOString().split('T')[0]; // Esto devolverá la fecha en formato 'YYYY-MM-DD'
-  //                     }
-  //                   });
-  //                   eolDates[i] = rows3[i].date;
-  //               }
-
-  //               const dataBcmStat = {
-  //                   labels: volLabels,
-  //                   datasets: [{
-  //                     label: 'Volumen medido (BCM)',
-  //                     data: volData,
-  //                     info: diag,
-  //                     fill: false,
-  //                     borderColor: 'rgba(0, 0, 255, 0.35)',
-  //                     tension: 0.1,
-  //                   },
-  //                   {
-  //                     label: 'Volumen Nominal (BCM)',
-  //                     data: nomData,
-  //                     fill: false,
-  //                     borderColor: 'rgba(255, 0, 0, 0.35)',
-  //                     tension: 0.1,
-  //                     pointRadius: 0,
-  //                     datalabels: {
-  //                       display: false, // Desactiva etiquetas
-  //                     },
-  //                   }]
-  //               };
-  //               bcmChart = new Chart(bcm_ctx, {
-  //                   type: "line",
-  //                   data: dataBcmStat,
-  //                   options: {
-  //                       plugins: {
-  //                           title: {
-  //                               display: true,
-  //                               align: "center",
-  //                               color: "#363949",
-  //                               font: {
-  //                               weight: 500,
-  //                               size: 14,
-  //                               },
-  //                               padding: {
-  //                               top: 10,
-  //                               bottom: 10,
-  //                               },
-  //                               text: 'Historial de Volumen de Celda'
-  //                           },
-  //                           legend: {
-  //                               display: true,
-  //                               position: "bottom",
-  //                               labels: {
-  //                                   font: {
-  //                                       weight: 500,
-  //                                       size: 11,
-  //                                   },
-  //                                   padding: 15,
-  //                                   boxWidth: 30,
-  //                               },
-  //                               reverse: true,
-  //                           },
-  //                           datalabels:{
-  //                               color: '#363949',
-  //                               align: -45,
-  //                               font: {
-  //                                   size: 11,
-  //                                   weight: 500,
-  //                               },
-  //                               clip: false,
-  //                           },
-  //                           tooltip: {
-  //                               enabled: true,
-  //                               titleFont: {
-  //                                   size: 11,
-  //                                   weight: 600,
-  //                               },
-  //                               bodyFont: {
-  //                                   size: 11,
-  //                                   weight: 500,
-  //                               },
-  //                               footerFont: {
-  //                                   size: 13,
-  //                                   weight: 300,
-  //                               },
-  //                               callbacks: {  
-  //                                   label: function(tooltipItem){
-  //                                       if(tooltipItem.datasetIndex == 0){
-  //                                           let data = tooltipItem.parsed.y;
-  //                                           return 'Volumen: ' + data + ' BCM'; 
-  //                                       }
-  //                                       else{return ""}
-  //                                   },
-  //                                   footer: function(tooltipItem){
-  //                                       if(tooltipItem[0].datasetIndex == 0){
-  //                                           let diag = tooltipItem[0].dataset.info[tooltipItem[0].dataIndex];
-  //                                           return 'Diagnostico:' + '\n' + diag;
-  //                                       }
-  //                                   }
-  //                               },
-  //                           },
-  //                       },
-  //                       responsive: true,
-  //                       maintainAspectRatio: false,
-  //                       scales: {
-  //                           x: {
-  //                               ticks: {
-  //                                   display: true,
-  //                                   font: {
-  //                                       weight: 500,
-  //                                       size: 11,
-  //                                   }
-  //                               },
-  //                           },
-  //                           y: {
-  //                               grace: 0.15,
-  //                               ticks: {
-  //                                   stepSize: 0.05,
-  //                                   font: {
-  //                                       weight: 500,
-  //                                       size: 11,
-  //                                   }
-  //                               },
-  //                           },
-  //                       },
-  //                   }
-  //               });
-  //               let historial_img = generarGrafico(bcmChart).replace('data:image/jpeg;base64,', '');
-
-  //               console.log("Datos de volumen: " + volData);
-  //               console.log("Fechas de EOL: " + eolDates);
-
-  //               if(rows3.length < 2) {
-  //                 eolData = 2000;
-  //                 msg = `No se cuenta con suficientes datos para realizar una estimación.`;
-  //                 pdfPath = path.join(__dirname, '/modelo_reporte_final_alt.pdf');                  
-  //               }
-  //               else if (parseFloat(rows[0].estado) < 60) {
-  //                 eolData = 1000;
-  //                 msg = `El volumen de celda ya se encuentra por debajo del 60% del volumen nominal (${(nomVol/1.55 * 0.6).toFixed(3)}).`;
-  //                 pdfPath = path.join(__dirname, '/modelo_reporte_final_alt.pdf');
-  //               }
-  //               else{
-  //                 // eolData = calcularRectaTendencia(eolDates, volData, 0.6*nomVol/1.55).tendencia.map(point => parseFloat(point.y.toFixed(3)));
-  //                 const { m, b } = generarRectaTendencia(eolDates, volData, 0.6*nomVol/1.55);
-  //                 console.log("m: " + m);
-  //                 console.log("b: " + b);
-  //                 if(m >= -0.000000000005) {
-  //                   eolData = 2000;
-  //                   msg = `No se cuenta con suficientes datos para realizar una estimación.`;
-  //                   pdfPath = path.join(__dirname, '/modelo_reporte_final_alt.pdf');
-  //                   percentVol = "";
-  //                   percentDates = "";
-  //                 }
-  //                 else{
-  //                   eolData = generarRectaTendencia(eolDates, volData, 0.6*nomVol/1.55).tendencia.map(point => parseFloat(point.y.toFixed(3)));                    
-  //                   newDates = generarRectaTendencia(eolDates, volData, 0.6*nomVol/1.55).tendencia.map(point => point.x);
-  //                   percentVol = encontrarValoresCercanosMenores(eolData, [0.9*nomVol/1.55, 0.8*nomVol/1.55, 0.7*nomVol/1.55, 0.6*nomVol/1.55]);
-  //                   percentDates = encontrarPosiciones(eolData, percentVol);
-  //                   actualDates = percentDates.map(pos => newDates[pos-1]);
-  //                   ultimaFecha = new Date(eolDates[eolDates.length - 1]);
-  //                   diferenciasEnAnios = actualDates.map(dateStr => {
-  //                     const actualDate = new Date(dateStr);
-  //                     const diferenciaEnMilisegundos = actualDate - ultimaFecha;
-  //                     const diferenciaEnAnios = diferenciaEnMilisegundos / (1000 * 60 * 60 * 24 * 365.25); // 365.25 para considerar los años bisiestos
-  //                     return diferenciaEnAnios;
-  //                   });
-  //                 }
-  //               }
-                
-  //               console.log("eolData: " + eolData);
-  //               console.log("percentVol: " + percentVol);
-  //               console.log("percentDates: " + percentDates);
-                
-  //               const percentData = {
-  //                 dates: percentDates,
-  //                 values: percentVol
-  //               };
-  //               const percentDataJSON = JSON.stringify(percentData);
-                
-  //               const sql4_PDF = 'UPDATE anilox_analysis SET eol = ?, percent=? WHERE id = ?';
-  //               db.query(sql4_PDF, [JSON.stringify(eolData), percentDataJSON, id], (err4, rows4) => {
-  //                 if (err4) {
-  //                   console.error("Error en la consulta SQL:", err4);
-  //                   return res.status(500).send({ status: "Error", message: "Error en la consulta SQL" });
-  //                 }
-                  
-  //                 const dataEOLGraph = {
-  //                   labels: newDates,
-  //                   datasets: [{
-  //                     type: 'line',
-  //                     label: 'Volumen estimado (BCM)',
-  //                     data: eolData.map(dato => Math.round(dato * 10) / 10),
-  //                     fill: false,
-  //                     borderColor: 'rgba(255, 0, 0, 0.35)',
-  //                     tension: 0.1,
-  //                     datalabels: {
-  //                       display: true,
-  //                       align: 'top',
-  //                     },
-  //                   }, {
-  //                     type: 'scatter',
-  //                     label: 'Volumen medido (BCM)',
-  //                     data: volData.map(dato => Math.round(dato * 10) / 10),
-  //                     fill: false,
-  //                     borderColor: 'rgba(0, 0, 255, 0.6)',
-  //                     datalabels: {
-  //                       display: true,
-  //                     },
-  //                   }]
-  //                 };
-
-  //                 eolGraph = new Chart(EOL_ctx, {
-  //                   data: dataEOLGraph,
-  //                   options: {
-  //                     plugins: {
-  //                       legend: {
-  //                         display: true,
-  //                         position: "bottom",
-  //                         labels: {
-  //                           font: {
-  //                             weight: 500,
-  //                             size: 11,
-  //                           },
-  //                           padding: 15,
-  //                           boxWidth: 30,
-  //                         },
-  //                         reverse: true,
-  //                       },
-  //                       datalabels:{
-  //                         color: '#363949',
-  //                         align: 'right', // 'right'
-  //                         padding: {
-  //                           right: 7,
-  //                         },
-  //                         font: {
-  //                           size: 11,
-  //                           weight: 500,
-  //                         },
-  //                         clip: false,
-  //                         formatter: function(value, context){
-  //                           if(context.dataset.type === 'line'){
-  //                             const volDataRounded = volData.map(dato => Math.round(dato * 10) / 10);
-  //                             if(value == parseFloat(percentVol[0].toFixed(1)) || value == parseFloat(percentVol[1].toFixed(1)) || value == parseFloat(percentVol[2].toFixed(1)) || value == parseFloat(percentVol[3].toFixed(1))) {
-  //                               if(!volDataRounded.includes(value)){
-  //                                 return value;
-  //                               }
-  //                             }
-  //                             else {
-  //                               return ''
-  //                             }
-  //                           }
-  //                         },
-  //                       }
-  //                     },
-  //                     responsive: true,
-  //                     maintainAspectRatio: false,
-  //                     scales: {
-  //                       x: {
-  //                         ticks: {
-  //                           display: true,
-  //                           font: {
-  //                             weight: 500,
-  //                             size: 14,
-  //                           }
-  //                         },
-  //                       },
-  //                       y: {
-  //                         ticks: {
-  //                           stepSize: 0.1,
-  //                           font: {
-  //                             weight: 500,
-  //                             size: 14,
-  //                           }
-  //                         },
-  //                       },
-  //                     },
-  //                   }
-  //                 });
-  //                 let eol_img = generarGrafico(eolGraph).replace('data:image/jpeg;base64,', '');
-  
-  //                 const outputPath = path.join(__dirname, '/output.pdf');              
-  //                 const replaceText = async () => {
-  //                   try{
-  //                     const pdfdoc = await PDFNet.PDFDoc.createFromFilePath(pdfPath);
-  //                     await pdfdoc.initSecurityHandler();
-  //                     const replacer = await PDFNet.ContentReplacer.create();
-  //                     const page = await pdfdoc.getPage(1); 
-  //                     const pageSet = await PDFNet.PageSet.createRange(1, 1);
-  //                     const page2 = await pdfdoc.getPage(2);
-  //                     const pageSet2 = await PDFNet.PageSet.createRange(2, 2);
-  //                     await replacer.addString('ANILOX', id);
-  //                     await replacer.addString('date', last);
-  //                     await replacer.addString('brand', brand);
-  //                     await replacer.addString('type', tipo);
-  //                     await replacer.addString('purchase', purchase);
-  //                     await replacer.addString('volume', volume);
-  //                     await replacer.addString('screen', screen);
-  //                     await replacer.addString('last', last);
-  //                     await replacer.addString('next', next);
-  //                     await replacer.addString('revision', '');
-  //                     await replacer.addString('tapadas', '');
-  //                     await replacer.addString('danadas', '');
-  //                     await replacer.addString('desgastadas', '');
-  //                     await replacer.addString('historial_volumen', '');
-  //                     await replacer.addString('grafico_eol', '');
-  //                     await replacer.addString('estado', estado);
-  //                     await replacer.addString('diagnostico', diagnostico);
-  //                     await replacer.addString('recomendacion', recomendacion);
-  //                     await replacer.addString('usuario', sesion_usuario);
-  //                     await replacer.addString('hoy', new Date().toLocaleDateString('es-ES'));
-
-  //                     await addBase64ImageToPDF(pdfdoc, pageSet, revision, coord_revision);
-  //                     await addBase64ImageToPDF(pdfdoc, pageSet, tapadas_img, coord_tapadas);
-  //                     await addBase64ImageToPDF(pdfdoc, pageSet, danadas_img, coord_danadas);
-  //                     await addBase64ImageToPDF(pdfdoc, pageSet, desgastadas_img, coord_desgastadas);
-  //                     await addBase64ImageToPDF(pdfdoc, pageSet, historial_img, coord_historial)
-
-  //                     if( pdfPath == path.join(__dirname, '/modelo_reporte_final_alt.pdf') ) { 
-  //                       await replacer.addString('grafico_eol', msg);
-  //                       await replacer.process(page);
-  //                       await replacer.process(page2);
-  //                       await pdfdoc.save(outputPath, PDFNet.SDFDoc.SaveOptions.e_linearized).then(() => {
-  //                         console.log('PDF alterno generado con éxito');
-  //                         fs.readFile(outputPath, (err_f, data) => {
-  //                           if (err_f) {
-  //                             console.error('Error al leer el archivo PDF:', err_f);
-  //                             return res.status(500).send('Error al procesar el archivo PDF');
-  //                           }
-  //                           const base64PDF = `data:application/pdf;base64,${data.toString('base64')}`;
-  //                           const SQL5_PDF = 'SELECT * FROM anilox_history WHERE anilox = ?';
-  //                           db.query(SQL5_PDF, [id], (err_g, rows_g) => {
-  //                             if (rows_g.length > 0) {
-  //                               const SQL6_PDF = 'UPDATE anilox_history SET report = ? WHERE anilox = ? AND id = ?';
-  //                               db.query(SQL6_PDF, [base64PDF, id, rows_g.length], (err_h, rows_h) => {
-  //                                 console.log('PDF convertido a Base64 y almacenado con éxito');
-  //                               });
-  //                             }
-  //                           });
-  //                         });
-  //                       }).catch((error) => {
-  //                         console.error('Error al procesar el archivo PDF:', error);
-  //                         return res.status(500).send('Error al procesar el archivo PDF');
-  //                       });
-  //                     }
-  //                     else{
-  //                       await replacer.addString('eol_80', percentData.values[1].toString());
-  //                       await replacer.addString('anio_80', diferenciasEnAnios[1].toFixed(1));
-  //                       await replacer.addString('eol_70', percentData.values[2].toString());
-  //                       await replacer.addString('anio_70', diferenciasEnAnios[2].toFixed(1));
-  //                       await replacer.addString('eol_60', percentData.values[3].toString());
-  //                       await replacer.addString('anio_60', diferenciasEnAnios[3].toFixed(1));
-  //                       await addBase64ImageToPDF(pdfdoc, pageSet2, eol_img, coord_graficaEOL)
-  //                           .then(() => {  
-  //                               replacer.process(page);
-  //                               replacer.process(page2);
-  //                               pdfdoc.save(outputPath, PDFNet.SDFDoc.SaveOptions.e_linearized);
-  //                               fs.readFile(outputPath, (err_f, data) => {
-  //                                   if (err_f) {
-  //                                       console.error('Error al leer el archivo PDF:', err_f);
-  //                                       return res.status(500).send('Error al procesar el archivo PDF');                                      
-  //                                   }
-  //                                   const base64PDF = `data:application/pdf;base64,${data.toString('base64')}`;
-  //                                   const SQL5_PDF = 'SELECT * FROM anilox_history WHERE anilox = ?';
-  //                                   db.query(SQL5_PDF, [id], (err_g, rows_g) => {
-  //                                       if (rows_g.length > 0) {
-  //                                           const SQL6_PDF = 'UPDATE anilox_history SET report = ? WHERE anilox = ? AND id = ?';
-  //                                           db.query(SQL6_PDF, [base64PDF, id, rows_g.length], (err_h, rows_h) => {
-  //                                               console.log('PDF convertido a Base64 y almacenado con éxito');
-  //                                           });
-  //                                       }
-  //                                   });
-  //                               });
-  //                           })
-  //                           .catch((error) => {
-  //                               console.error('Error al añadir imagen al PDF:', error);
-  //                               res.status(500).send('Error al añadir imagen al PDF');
-  //                           });
-  //                     }                      
-  //                   }
-  //                   catch (error) {
-  //                     console.error('Error al reemplazar el texto en el PDF:', error);
-  //                     res.status(500).send('Error al reemplazar el texto en el PDF');
-  //                   }      
-  //                 }
-  //                 try{
-  //                   PDFNet.runWithCleanup(replaceText, "demo:1720195871717:7f8468a2030000000072c68a051f8b60b73e2b966862266ca0be4eacb7").then(() => {
-  //                     console.log("PDF generado con éxito");
-  //                     fs.readFile(outputPath, (err, data) => {
-  //                         if (err) {
-  //                             res.statusCode = 500;
-  //                             res.send(err);
-  //                         } else {                              
-  //                             return res.status(200).send({ status: "Success", message: "PDF generado con éxito", result: rows3[0] });
-  //                         }                   
-  //                     })
-  //                   }).catch(err => {
-  //                       res.statusCode = 500;
-  //                       res.send(err);
-  //                   }); 
-  //                 }
-  //                 catch (error) {
-  //                   console.log("Error en PDFNet.runWithCleanup: ",error);
-  //                   return res.status(500).send({status: "Error", message: "Error al generar el PDF"});
-  //                 }                  
-  //               });                
-  //           });
-  //       });
-  //   })      
-  // } 
-  // catch {
-  //   console.log("Error al generar el PDF: ",error);
-  //   return res.status(500).send({status: "Error", message: "Error al generar el PDF"});
-  // }
 }
 
 module.exports = { login, registro, registro_licencia, password_recovery, soloAdmin, soloPublico, soloSuperAdmin, tablaAniloxAnalysis, tablaAniloxList,
-                   cotizaciones, usuarioNivelCliente, tablaClientes, tablaLicencias, tablaAniloxHistory, borrarAnilox, generarPdf, superAnalysis, superListado, superHistory };
+                   cotizaciones, usuarioNivelCliente, tablaClientes, tablaLicencias, tablaAniloxHistory, borrarAnilox, generarPdf, superAnalysis,
+                   superListado, superHistory };

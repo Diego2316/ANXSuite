@@ -262,6 +262,18 @@ const submit = async(e)=>{
         },
             res = await fetch("api/listado", options); // Se ejecuta else if(insertarNuevo) ni bien se da submit al formulario de nuevo anilox
         if(!res.ok) throw{status: res.status, statusText: res.statusText};
+        // --------CÓDIGO PARA GENERAR PDF-----
+        let res2 = await fetch('api/pdf', { // Se ejecuta después del procesamiento de imágenes
+          method: "POST",
+          headers: {
+            "Content-type": "application/json; charset=UTF-8",
+          },
+          body: JSON.stringify({
+            id: $code.value,
+          }),
+        });
+        if(!res2.ok) throw{status: res2.status, statusText: res2.statusText};  
+        $formExtra.submit();  // Envia el formulario de recorrido}
       }
       else{
         let options = {
@@ -289,6 +301,18 @@ const submit = async(e)=>{
         },
             res = await fetch("api/listado", options); // Se ejecuta else if(insertarUsado) ni bien se da submit al formulario de nuevo anilox
         if(!res.ok) throw{status: res.status, statusText: res.statusText};
+        // --------CÓDIGO PARA GENERAR PDF-----
+        let res2 = await fetch('api/pdf', { // Se ejecuta después del procesamiento de imágenes
+          method: "POST",
+          headers: {
+            "Content-type": "application/json; charset=UTF-8",
+          },
+          body: JSON.stringify({
+            id: $code.value,
+          }),
+        });
+        if(!res2.ok) throw{status: res2.status, statusText: res2.statusText};  
+        $formExtra.submit();  // Envia el formulario de recorrido}
       }
       $formNew.submit();
     }
