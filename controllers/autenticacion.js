@@ -1866,15 +1866,15 @@ async function generarPdf(req, res) {
         await replacer.process(page1);
         await replacer.process(page2);
         await doc.save(outputPath, PDFNet.SDFDoc.SaveOptions.e_linearized);
-        fs.readFile(outputPath, (err_f, data) => {
-          if(err_f){
-            console.log("Error al leer el archivo PDF: ", err_f);
+        fs.readFile(outputPath, (err, data) => {
+          if(err){
+            console.log("Error al leer el archivo PDF: ", err);
             return res.status(500).send("Error al procesar el archivo PDF");
           }
           const base64PDF = `data:application/pdf;base64,${data.toString('base64')}`;
           if(anilox_history.length > 0){
             const sql_pdf = `UPDATE anilox_history SET report = ? where anilox = ? AND id = ?`;
-            db.query(sql_pdf, [base64PDF, id, anilox_history.length], (err_h, rows_H) => {
+            db.query(sql_pdf, [base64PDF, id, anilox_history.length], (err, rows) => {
               console.log("PDF convertido a base64 y almacenado con exito en la DB");
             });
           }
