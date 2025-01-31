@@ -1872,15 +1872,12 @@ async function generarPdf(req, res) {
             return res.status(500).send("Error al procesar el archivo PDF");
           }
           const base64PDF = `data:application/pdf;base64,${data.toString('base64')}`;
-          const sql_pdf1 = 'SELECT anilox, id, date FROM anilox_history WHERE anilox = ?';
-          db.query(sql_pdf1, [id], (err_g, rows_g) => {
-            if(rows_g.length > 0){
-              const sql_pdf2 = `UPDATE anilox_history SET report = ? where anilox = ? AND id = ?`;
-              db.query(sql_pdf2, [base64PDF, id, rows_g.length], (err_h, rows_H) => {
-                console.log("PDF convertido a base64 y almacenado con exito en la DB");
-              });
-            }
-          });
+          if(anilox_history.length > 0){
+            const sql_pdf = `UPDATE anilox_history SET report = ? where anilox = ? AND id = ?`;
+            db.query(sql_pdf, [base64PDF, id, anilox_history.length], (err_h, rows_H) => {
+              console.log("PDF convertido a base64 y almacenado con exito en la DB");
+            });
+          }
         });
       } catch (error) {
         console.error('Error al generar el PDF:', error);
