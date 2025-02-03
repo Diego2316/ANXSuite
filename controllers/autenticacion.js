@@ -2,14 +2,13 @@ let sesion_usuario, sesion_empresa, sesion_level; // Variables para almacenar el
 const mysql = require('mysql'); // Necesario para trabajar con MySQL
 require('dotenv').config(); // Necesario para leer las variables de entorno
 const jwt = require('jsonwebtoken');  // Necesario para crear tokens de acceso
-const path = require('path');
-const { Chart, DecimationAlgorithm } = require('chart.js/auto');
-const ChartDataLabels = require('chartjs-plugin-datalabels');
-Chart.register(ChartDataLabels);
-const { createCanvas, loadImage } = require('canvas');
+const path = require('path'); // Necesario para rutas usadas en la creacion de PDF
+const { Chart } = require('chart.js/auto'); // Necesario para generar gráficos
+const ChartDataLabels = require('chartjs-plugin-datalabels'); // Plugin para etiquetas en graficos
+Chart.register(ChartDataLabels); // Registro del plugin
+const { createCanvas, loadImage } = require('canvas'); // Necesario para convertir los gráficos en imagenes
 const { PDFNet } = require("@pdftron/pdfnet-node"); // Necesario para trabajar con archivos PDF.
 const nodemailer = require('nodemailer'); // Necesario para enviar correos electrónicos.
-const redis = require('redis'); // Necesario para trabajar con caché.
 const fs = require('fs'); // (file system) Necesario para usar los archivos PDF de modelo.
 const os = require('os'); // (operating system) Necesario para obtener la ruta temporal del sistema.
 
