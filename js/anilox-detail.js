@@ -162,7 +162,7 @@ const getAnilox = async()=>{
     let depth = json1[0].depth;
     let opening = json1[0].opening;
     let wall = json1[0].wall;
-    let screen = Math.round(((json1[0].screen*screenMulti)+Number.EPSILON)*10)/10;
+    let screen = Math.round(((json1[0].screen/screenMulti)+Number.EPSILON)*10)/10;
     let angle = json1[0].angle;
     let last = json1[0].last;
     let next = json2[0].next;

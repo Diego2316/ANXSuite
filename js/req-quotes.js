@@ -49,7 +49,7 @@ const getAniloxList = async()=>{
     $specificType.textContent = json1[0].type;
     $specificAngle.textContent = `${json1[0].angle}`;
     $specificVol.textContent = `${Math.round(((json1[0].nomvol*volMulti)+Number.EPSILON)*10)/10}`;
-    $specificScreen.textContent = `${Math.round(((json1[0].screen*screenMulti)+Number.EPSILON)*10)/10}`;
+    $specificScreen.textContent = `${Math.round(((json1[0].screen/screenMulti)+Number.EPSILON)*10)/10}`;
   } 
   catch (err) {
     console.log(err);
@@ -84,7 +84,7 @@ const getAniloxData = async(e)=>{
       $specificType.textContent = json1[0].type;
       $specificAngle.textContent = `${json1[0].angle}`;
       $specificVol.textContent = `${Math.round(((json1[0].nomvol*volMulti)+Number.EPSILON)*10)/10}`;
-      $specificScreen.textContent = `${Math.round(((json1[0].screen*screenMulti)+Number.EPSILON)*10)/10}`;
+      $specificScreen.textContent = `${Math.round(((json1[0].screen/screenMulti)+Number.EPSILON)*10)/10}`;
     } 
     catch (err) {
       console.log(err);
