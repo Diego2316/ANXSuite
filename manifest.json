@@ -1,6 +1,6 @@
 {
-  "name": "ANX Suite",
-  "short_name": "ANX Suite",
+  "name": "ANXSuite",
+  "short_name": "ANXSuite",
   "description": "Aplicación para facilitar la administración y seguimineto del estado de sus rodillos ánilox",
   "background_color": "#dce1eb",
   "theme_color": "#364349",
