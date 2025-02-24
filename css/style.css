@@ -416,7 +416,7 @@ b{
 }
 
 .top-bar .user{
-  flex: 0 0 10rem;
+  flex: 0 0 13rem;
   display: flex;
   flex-direction: column;
   justify-self: right;
