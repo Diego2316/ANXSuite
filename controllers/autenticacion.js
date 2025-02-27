@@ -171,7 +171,7 @@ async function password_recovery(req, res) {   // función redirigida desde api/
       secure: true,
       auth: {
         user: 'anxsuite@gmail.com',
-        pass: 'flfb qblb tsef clqq'
+        pass: 'hpqh addi hqhe qimq'
       }
     });
 
@@ -783,7 +783,7 @@ async function cotizaciones(req, res) {
       secure: true,
       auth: {
         user: 'anxsuite@gmail.com',
-        pass: 'flfb qblb tsef clqq' // Es una contraseña de aplicación (se crea en Gmail cuando se autentica la verificación de 2 factores)
+        pass: 'hpqh addi hqhe qimq' // Es una contraseña de aplicación (se crea en Gmail cuando se autentica la verificación de 2 factores)
       }
     });
 
